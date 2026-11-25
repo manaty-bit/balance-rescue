@@ -45,8 +45,11 @@ button:not(:disabled):active { transform: translateY(1px); }
 .primary:not(:disabled):hover { background: #0b5140; }
 .intro { display: flex; justify-content: space-between; align-items: end; gap: 10px 18px; margin: 12px 0 14px; flex-wrap: wrap; }
 .intro p { color: var(--muted); margin-top: 5px; max-width: 42rem; }
-.stage-label { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: .86rem; font-weight: 700; }
-.stage-label select { min-width: 0; font-size: .92rem; }
+.stage-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 12px; margin-bottom: 10px; }
+.stage-buttons { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; width: min(100%, 354px); }
+.stage-buttons button { padding-inline: 0; }
+.stage-buttons [aria-current="step"] { color: #fff; background: var(--green); border-color: var(--green); }
+#stageName { font-size: .88rem; font-weight: 700; color: var(--muted); }
 .toolbar { display: flex; gap: 8px 16px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
 .mode-tabs, .session-tools { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
 .mode-tabs { padding: 3px; border-radius: 14px; background: #dce9df; }
@@ -60,6 +63,11 @@ button:not(:disabled):active { transform: translateY(1px); }
 .workbench, .guidance { display: grid; align-content: start; gap: 14px; min-width: 0; }
 @media (min-width: 850px) {
   .play-layout { grid-template-columns: minmax(0, 1.72fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  [data-mode=quiz] .play-layout { grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  [data-mode=quiz] .workbench { display: contents; }
+  [data-mode=quiz] .board { grid-column: 1; grid-row: 1; }
+  [data-mode=quiz] .guidance { grid-column: 1; grid-row: 2; }
+  [data-mode=quiz] .control-panel { grid-column: 2; grid-row: 1 / span 2; }
 }
 .board {
   position: relative;
@@ -184,7 +192,10 @@ button:not(:disabled):active { transform: translateY(1px); }
 .controls { display: flex; gap: 7px; align-items: end; flex-wrap: wrap; }
 .controls label { display: grid; gap: 3px; min-width: 0; font-size: .88rem; font-weight: 680; }
 .controls input { width: 76px; }
-.quiz-operations, .quiz-keypad { flex: 0 0 100%; margin: 0 0 4px; padding: 0; border: 0; min-width: 0; }
+.quiz-inputs { flex: 0 0 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); gap: 8px; align-items: start; }
+.quiz-operations, .quiz-keypad { margin: 0; padding: 0; border: 0; min-width: 0; }
+.quiz-operations { grid-row: 1 / span 2; }
+.quiz-inputs #apply { grid-column: 2; }
 .quiz-operations legend { padding: 0; font-size: .88rem; font-weight: 680; }
 .operation-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 6px; }
 .operation-options label { position: relative; }
@@ -195,10 +206,10 @@ button:not(:disabled):active { transform: translateY(1px); }
 .operation-options input:focus-visible + .operation-face { outline: 3px solid var(--focus); outline-offset: 2px; }
 .operation-options input:disabled { cursor: default; }
 .operation-options input:disabled + .operation-face { opacity: .62; }
-.quiz-keypad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; max-width: 19rem; padding: 8px; background: #edf4ed; border-radius: 12px; }
+.quiz-keypad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; padding: 6px; background: #edf4ed; border-radius: 12px; }
 .quiz-keypad label { grid-column: 1 / -1; grid-template-columns: auto minmax(0, 1fr); align-items: center; }
 .quiz-keypad input { width: 100%; text-align: end; font-variant-numeric: tabular-nums; }
-.quiz-keypad button { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.quiz-keypad button { padding-inline: 0; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
 .quiz-keypad button[data-step] { background: #dcebe1; }
 .drop-action { display: grid; }
 #drop { min-height: 48px; box-shadow: 0 3px 0 #083c2e; }
@@ -273,12 +284,25 @@ body > footer a { color: var(--green); }
   body > header { padding-top: 8px; }
   .intro { margin: 6px 0 10px; }
   .intro p { font-size: .88rem; }
+  .stage-nav { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 3px 8px; }
+  .stage-buttons { grid-column: 1 / -1; grid-row: 2; }
+  #stageName { grid-column: 2; grid-row: 1; }
+  [data-mode=quiz] .intro p { display: none; }
+  [data-mode=quiz] .toolbar { margin-bottom: 5px; }
+  [data-mode=quiz] .stage-nav { margin-bottom: 6px; }
+  [data-mode=quiz] .board { position: sticky; top: 0; z-index: 3; }
+  [data-mode=quiz] .control-panel :is(button, input) { scroll-margin-top: 17rem; }
   .toolbar { gap: 4px 8px; margin-bottom: 8px; }
   .mode-tabs button, .session-tools button { font-size: .8rem; padding-inline: 8px; }
   .board { padding: 9px 9px 6px; }
   .pan, [data-mode=drop] .pan { min-height: 61px; }
   .workbench, .guidance, .play-layout { gap: 10px; }
   .drop-controls { grid-template-columns: 1fr; }
+  [data-mode=quiz] .board .pan { min-height: 44px; }
+  [data-mode=quiz] .board .scale { height: 33px; }
+  [data-mode=quiz] .board .scale::after { border-bottom-width: 22px; }
+  .operation-options { grid-template-columns: 1fr; gap: 4px; }
+  .operation-face { padding: 3px; gap: 4px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .card { transition: none; }
@@ -291,7 +315,6 @@ body > footer a { color: var(--green); }
 <main>
 <div class="intro">
  <div><h1 data-label="title">てんびんレスキュー</h1><p data-label="intro">カードを選んで落とそう。着地すると両辺の式が変わるよ。左に x、右に数だけ残せばクリア！</p></div>
- <label class="stage-label"><span data-label="level">ステージ</span> <select id="stage"></select></label>
 </div>
 <div class="toolbar">
 <div class="mode-tabs" role="group" aria-label="遊び方">
@@ -299,12 +322,24 @@ body > footer a { color: var(--green); }
  <button id="quizMode" type="button" data-label="quizMode" aria-pressed="false">クイズ版</button>
 </div>
 <div class="session-tools">
- <button id="practice" type="button" data-label="practice">0 · あそび方</button>
  <button id="challenge" type="button" data-label="challenge">60秒チャレンジ</button>
  <button id="records" type="button" data-label="records">学習記録</button>
  <span id="challengeClock" hidden></span>
 </div>
 </div>
+<nav class="stage-nav" aria-labelledby="stageLabel">
+ <span id="stageLabel" data-label="level">ステージ</span>
+ <div id="stage" class="stage-buttons">
+  <button id="practice" type="button" data-stage="-1">0</button>
+  <button type="button" data-stage="0">1</button>
+  <button type="button" data-stage="1">2</button>
+  <button type="button" data-stage="2">3</button>
+  <button type="button" data-stage="3">4</button>
+  <button type="button" data-stage="4">5</button>
+  <button type="button" data-stage="5">6</button>
+ </div>
+ <span id="stageName"></span>
+</nav>
 <p id="practiceGuide" hidden data-label="practiceGuide">両皿から同じ数を取っても、てんびんは釣り合うよ。まずは両辺から1を引いてみよう。</p>
 <div class="play-layout">
 <div class="workbench">
@@ -333,6 +368,7 @@ body > footer a { color: var(--green); }
  <p id="dropPreview" role="status"></p>
 </div>
 <form class="controls" id="controls">
+  <div class="quiz-action quiz-inputs" hidden>
   <fieldset id="operation" class="quiz-action quiz-operations" hidden>
    <legend data-label="operation">両辺にする操作</legend>
    <div class="operation-options">
@@ -359,7 +395,8 @@ body > footer a { color: var(--green); }
    <button type="button" data-digit="0">0</button>
    <button type="button" data-step="1" aria-label="数を1増やす">＋</button>
   </fieldset>
-  <button class="primary quiz-action" id="apply" type="submit" data-label="apply">両辺に適用</button>
+   <button class="primary quiz-action" id="apply" type="submit" data-label="apply">両辺に適用</button>
+  </div>
   <button id="undo" type="button" data-label="undo">1手戻す</button>
   <button id="hint" type="button" data-label="hint">ヒント</button>
   <button id="next" type="button" class="primary" data-label="next" hidden>次の問題</button>
@@ -908,10 +945,15 @@ body > footer a { color: var(--green); }
     $('hint').disabled=done||dropping;
     const challengeActive=Boolean(challengeRun?.active);
     const blocked=dropping||challengeActive;
-    $('stage').disabled=blocked;
+    for(const button of $('stage').querySelectorAll('button')){
+      const active=Number(button.dataset.stage)===stage;
+      button.disabled=blocked;
+      if(active)button.setAttribute('aria-current','step');
+      else button.removeAttribute('aria-current');
+    }
+    $('stageName').textContent=stage===-1?w.practice:w.stages[stage];
     $('quizMode').disabled=blocked;
     $('dropMode').disabled=blocked;
-    $('practice').disabled=blocked;
     $('records').disabled=blocked;
     $('challenge').disabled=dropping;
     $('challenge').textContent=challengeActive?w.stopChallenge:w.challenge;
@@ -970,8 +1012,10 @@ body > footer a { color: var(--green); }
     $('quizMode').setAttribute('aria-pressed',String(mode==='quiz'));
     $('dropMode').setAttribute('aria-pressed',String(mode==='drop'));
     document.querySelector('[data-label="intro"]').textContent=copy()[mode==='drop'?'dropIntro':'intro'];
-    $('stage').replaceChildren(...copy().stages.map((name,i)=>new Option(name,i)));
-    $('stage').value=stage===-1?'':stage;
+    for(const button of $('stage').querySelectorAll('button')){
+      const index=Number(button.dataset.stage);
+      button.setAttribute('aria-label',index===-1?copy().practice:copy().stages[index]);
+    }
     render();
   }
   function perform(operation,amount){
@@ -1175,7 +1219,6 @@ body > footer a { color: var(--green); }
   $('hint').onclick=()=>{shapeGained=false;feedback='hint';render();};
   function selectStage(next){
     stage=next;
-    $('stage').value=next===-1?'':String(next);
     problem=0;
     stageAnswers=[];
     if(next>=0){
@@ -1185,8 +1228,10 @@ body > footer a { color: var(--green); }
     }
     start();
   }
-  $('stage').onchange=()=>selectStage(Number($('stage').value));
-  $('practice').onclick=()=>selectStage(-1);
+  $('stage').onclick=event=>{
+    const button=event.target.closest('button[data-stage]');
+    if(button&&Number(button.dataset.stage)!==stage)selectStage(Number(button.dataset.stage));
+  };
   $('next').onclick=()=>{
     if(challengeRun?.active||!solved(current()))return;
     if(stage===-1){selectStage(0);return;}
