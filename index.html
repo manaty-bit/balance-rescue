@@ -24,6 +24,7 @@
   --line: #d2ded4;
   --focus: #985b11;
   --math: "STIX Two Math", "Cambria Math", Georgia, serif;
+  --math-display: "Latin Modern Math", var(--math);
 }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 0; }
@@ -120,11 +121,11 @@ button:not(:disabled):active { transform: translateY(1px); }
   color: #133d33;
   background: #fffdfa;
   box-shadow: 0 2px 0 #42846028;
-  font: 400 clamp(1.52rem, 4.5vw, 2.65rem)/1.25 "Latin Modern Math", var(--math);
+  font: 400 clamp(1.52rem, 4.5vw, 2.65rem)/1.25 var(--math-display);
   text-align: center;
   overflow-wrap: anywhere;
 }
-.equation math { font-family: inherit; font-size: inherit; }
+:is(.equation, .operation-symbol, .card, .falling) math { font-family: inherit; font-size: inherit; }
 [data-mode=drop] .equation { background: #f2fbeb; }
 #equation[data-simplifying] { background: #ffefb8; color: #56380c; }
 .cancel-pair { display: inline-block; position: relative; white-space: pre; }
@@ -200,8 +201,8 @@ button:not(:disabled):active { transform: translateY(1px); }
 .operation-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 6px; }
 .operation-options label { position: relative; }
 .operation-options input { position: absolute; opacity: 0; inset: 0; margin: 0; width: 100%; height: 100%; cursor: pointer; }
-.operation-face { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; min-height: 44px; padding: 6px; text-align: center; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
-.operation-face b { font-size: 1.15rem; white-space: nowrap; }
+.operation-face { display: grid; gap: 2px; align-content: center; justify-items: center; min-height: 44px; padding: 6px; text-align: center; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.operation-symbol { font: 400 1.3rem/1 var(--math-display); white-space: nowrap; }
 .operation-options input:checked + .operation-face { border-color: var(--green); color: var(--green); background: #e2f6e9; box-shadow: inset 0 0 0 1px var(--green); }
 .operation-options input:focus-visible + .operation-face { outline: 3px solid var(--focus); outline-offset: 2px; }
 .operation-options input:disabled { cursor: default; }
@@ -226,11 +227,11 @@ button:not(:disabled):active { transform: translateY(1px); }
   border-color: var(--card-edge);
   color: var(--card-ink);
 }
-.card { min-width: 49px; min-height: 48px; border-radius: 12px; box-shadow: 0 3px var(--card-edge); font: 800 1.12rem/1.2 system-ui, sans-serif; transition: transform 130ms ease; }
+.card { min-width: 49px; min-height: 48px; border-radius: 12px; box-shadow: 0 3px var(--card-edge); font: 400 1.22rem/1.2 var(--math-display); transition: transform 130ms ease; }
 .card[aria-pressed=true] { outline: 2px solid var(--green); outline-offset: 2px; transform: translateY(-3px); }
 [data-card=multiply], [data-card=divide] { --card-face: #d3e4ff; --card-edge: #7999bc; --card-ink: #173b63; }
 [data-card=add], [data-card=subtract] { --card-face: #d5f2df; --card-edge: #83ad91; --card-ink: #15462f; }
-.falling { pointer-events: none; position: absolute; z-index: 2; min-width: 44px; padding: 4px 7px; text-align: center; border-width: 2px; border-style: solid; border-radius: 12px; font-weight: 850; transform: translateX(-50%); will-change: transform; }
+.falling { pointer-events: none; position: absolute; z-index: 2; min-width: 44px; padding: 4px 7px; text-align: center; border-width: 2px; border-style: solid; border-radius: 12px; font: 400 1.22rem/1.2 var(--math-display); transform: translateX(-50%); will-change: transform; }
 .impact {
   position: absolute;
   z-index: 2;
@@ -304,7 +305,7 @@ body > footer a { color: var(--green); }
   [data-mode=quiz] .board .scale { height: 33px; }
   [data-mode=quiz] .board .scale::after { border-bottom-width: 22px; }
   .operation-options { grid-template-columns: 1fr; gap: 4px; }
-  .operation-face { padding: 3px; gap: 4px; }
+  .operation-face { padding: 3px; font-size: .8rem; line-height: 1.15; }
 }
 @media (prefers-reduced-motion: reduce) {
   .card { transition: none; }
@@ -374,12 +375,12 @@ body > footer a { color: var(--green); }
   <fieldset id="operation" class="quiz-action quiz-operations" hidden>
    <legend data-label="operation">両辺にする操作</legend>
    <div class="operation-options">
-    <label><input type="radio" name="operation" value="add"><span class="operation-face"><b aria-hidden="true">+</b><span data-label="quizAdd"></span></span></label>
-    <label><input type="radio" name="operation" value="subtract" checked><span class="operation-face"><b aria-hidden="true">−</b><span data-label="quizSubtract"></span></span></label>
-    <label><input type="radio" name="operation" value="multiply"><span class="operation-face"><b aria-hidden="true">×</b><span data-label="quizMultiply"></span></span></label>
-    <label><input type="radio" name="operation" value="divide"><span class="operation-face"><b aria-hidden="true">÷</b><span data-label="quizDivide"></span></span></label>
-    <label><input type="radio" name="operation" value="addVariable"><span class="operation-face"><b aria-hidden="true">+x</b><span data-label="addVariable"></span></span></label>
-    <label><input type="radio" name="operation" value="remove"><span class="operation-face"><b aria-hidden="true">−x</b><span data-label="remove"></span></span></label>
+    <label><input type="radio" name="operation" value="add"><span class="operation-face"><span class="operation-symbol" aria-hidden="true">+</span><span data-label="quizAdd"></span></span></label>
+    <label><input type="radio" name="operation" value="subtract" checked><span class="operation-face"><span class="operation-symbol" aria-hidden="true">−</span><span data-label="quizSubtract"></span></span></label>
+    <label><input type="radio" name="operation" value="multiply"><span class="operation-face"><span class="operation-symbol" aria-hidden="true">×</span><span data-label="quizMultiply"></span></span></label>
+    <label><input type="radio" name="operation" value="divide"><span class="operation-face"><span class="operation-symbol" aria-hidden="true">÷</span><span data-label="quizDivide"></span></span></label>
+    <label><input type="radio" name="operation" value="addVariable"><span class="operation-face"><span class="operation-symbol" aria-hidden="true">+<math><mi>x</mi></math></span><span data-label="quizAddVariable"></span></span></label>
+    <label><input type="radio" name="operation" value="remove"><span class="operation-face"><span class="operation-symbol" aria-hidden="true">−<math><mi>x</mi></math></span><span data-label="quizRemoveVariable"></span></span></label>
    </div>
   </fieldset>
   <fieldset id="quizKeypad" class="quiz-action quiz-keypad">
@@ -579,7 +580,7 @@ body > footer a { color: var(--green); }
       dropIntro:'カードを両皿に落として、左に x、右に数だけ残そう。',dropReady:'同じカードが左右の皿に落ちます。',dropSelected:label=>`選んだカード：${label} を両皿へ`,dropFalling:'着地で両辺に同じ操作！',moves:(n,best)=>`使ったカード：${n}枚${best? ' ／ 最少 '+best+'枚':''}`,
       multiply:'同じ数をかける',
       level:'ステージ',stages:['1 · おもりを取り除く','2 · 同じ組に分ける','3 · 両側の x を取り除く','4 · 小数を整数に','5 · 分数を整数に','6 · かっこと符号'],
-      quizAdd:'両辺にたす',quizSubtract:'両辺からひく',quizMultiply:'両辺にかける',quizDivide:'両辺をわる',increase:'数を1増やす',decrease:'数を1減らす',operation:'両辺にする操作',amount:'数',apply:'両辺に適用',undo:'1手戻す',hint:'ヒント',next:'次の問題',
+      quizAddVariable:'文字の項を足す',quizRemoveVariable:'文字の項を引く',quizAdd:'両辺にたす',quizSubtract:'両辺からひく',quizMultiply:'両辺にかける',quizDivide:'両辺をわる',increase:'数を1増やす',decrease:'数を1減らす',operation:'両辺にする操作',amount:'数',apply:'両辺に適用',undo:'1手戻す',hint:'ヒント',next:'次の問題',
       history:'式の変形',terms:'利用条件',initial:'はじめの式',
       add:'おもりを足す',subtract:'おもりを引く',remove:'x を引く',divide:'同じ数で割る',
       invalid:'1以上の整数を選ぼう。',addVariable:'x の箱を足す',
@@ -623,7 +624,7 @@ body > footer a { color: var(--green); }
       dropIntro:'Drop cards onto both pans. Leave one x on the left and a number on the right.',dropReady:'The same card drops onto both pans.',dropSelected:label=>`Selected: ${label} on both pans`,dropFalling:'The same move lands on both sides!',moves:(n,best)=>`Cards used: ${n}${best?' · Best: '+best:''}`,
       multiply:'Multiply by the same number',
       level:'Stage',stages:['1 · Remove weights','2 · Make equal groups','3 · Remove x from both sides','4 · Clear decimals','5 · Clear fractions','6 · Brackets and signs'],
-      quizAdd:'Add to both sides',quizSubtract:'Subtract from both sides',quizMultiply:'Multiply both sides',quizDivide:'Divide both sides',increase:'Increase amount by 1',decrease:'Decrease amount by 1',operation:'Operation on both sides',amount:'Amount',apply:'Apply to both sides',undo:'Undo',hint:'Hint',next:'Next problem',
+      quizAddVariable:'Add a variable term',quizRemoveVariable:'Subtract a variable term',quizAdd:'Add to both sides',quizSubtract:'Subtract from both sides',quizMultiply:'Multiply both sides',quizDivide:'Divide both sides',increase:'Increase amount by 1',decrease:'Decrease amount by 1',operation:'Operation on both sides',amount:'Amount',apply:'Apply to both sides',undo:'Undo',hint:'Hint',next:'Next problem',
       history:'Equation steps',terms:'Terms of Use',initial:'Starting equation',
       add:'Add weights',subtract:'Subtract weights',remove:'Subtract x boxes',divide:'Divide by the same number',
       invalid:'Choose a whole number of at least 1.',addVariable:'Add x boxes',
@@ -841,7 +842,7 @@ body > footer a { color: var(--green); }
       button.type='button';
       button.className='card';
       button.dataset.card=operation;
-      button.textContent=cardLabel(operation,amount);
+      button.append(equationContent(cardLabel(operation,amount)));
       button.setAttribute('aria-label',copy().explain[operation](amount));
       button.setAttribute('aria-pressed',String(selectedCard?.[0]===operation&&selectedCard[1]===amount));
       button.disabled=dropping;
@@ -1115,7 +1116,7 @@ body > footer a { color: var(--green); }
       const chip=document.createElement('span');
       chip.className='falling';
       chip.dataset.card=operation;
-      chip.textContent=label;
+      chip.append(equationContent(label));
       chip.setAttribute('aria-hidden','true');
       chip.style.left=(rect.left+rect.width/2-bounds.left)+'px';
       chip.style.top=startY+'px';
