@@ -124,6 +124,9 @@ button:not(:disabled):active { transform: translateY(1px); }
 }
 @keyframes cancel { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .pans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(9px,4vw,30px); text-align: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .board[data-practice-drop=true] .pans { margin-top: clamp(56px, 8vw, 96px); }
+}
 .pan-side { display: grid; grid-template-rows: auto 1fr; min-width: 0; }
 .pan-label { display: block; font-size: .71rem; font-weight: 740; margin-bottom: 3px; }
 .pan {
@@ -770,6 +773,7 @@ body > footer a { color: var(--green); }
     const board=document.querySelector('.board');
     board.dataset.cleared=String(index===3);
     board.dataset.aiming=String(Boolean(selectedCard)&&!dropping);
+    board.dataset.practiceDrop=String(mode==='drop'&&!challengeRun?.active);
   }
   function updateDropSelection(){
     const w=copy();
@@ -1031,6 +1035,7 @@ body > footer a { color: var(--green); }
       return;
     }
     const board=document.querySelector('.board');
+    if(!challengeRun?.active)board.scrollIntoView({block:'nearest',behavior:'instant'});
     const bounds=board.getBoundingClientRect();
     const startY=$('equation').getBoundingClientRect().bottom-bounds.top+3;
     const falling=targets.map(pan=>{
@@ -1049,7 +1054,7 @@ body > footer a { color: var(--green); }
     });
     const furthest=Math.max(...falling.map(({distance})=>distance));
     // A fixed duration keeps short drops on narrow screens easy to follow.
-    const duration=challengeRun?.active?450:800;
+    const duration=challengeRun?.active?450:1450;
     // Show the operation on both cards before they start moving in practice.
     const launch=performance.now()+(challengeRun?.active?0:220);
     function frame(now){
