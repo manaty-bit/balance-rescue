@@ -116,6 +116,7 @@ button:not(:disabled):active { transform: translateY(1px); }
   text-align: center;
   overflow-wrap: anywhere;
 }
+.equation math { font-family: inherit; font-size: inherit; }
 [data-mode=drop] .equation { background: #f2fbeb; }
 #equation[data-simplifying] { background: #ffefb8; color: #56380c; }
 .cancel-pair { display: inline-block; position: relative; white-space: pre; }
@@ -862,6 +863,19 @@ body > footer a { color: var(--green); }
       questionClock.since=null;
     }
   }
+  function equationContent(text){
+    const parts=text.split('x');
+    const content=document.createDocumentFragment();
+    content.append(parts[0]);
+    for(const part of parts.slice(1)){
+      const math=document.createElementNS('http://www.w3.org/1998/Math/MathML','math');
+      const identifier=document.createElementNS(math.namespaceURI,'mi');
+      identifier.textContent='x';
+      math.append(identifier);
+      content.append(math,part);
+    }
+    return content;
+  }
   function render() {
     const w=copy(), state=current(), [a,b,c,d,scale=1]=state;
     const equationNode=$('equation');
@@ -870,10 +884,14 @@ body > footer a { color: var(--green); }
       const leftEnd=intermediate.text.indexOf(' = ');
       const cancelled=document.createElement('span');
       cancelled.className='cancel-pair';
-      cancelled.textContent=intermediate.text.slice(intermediate.cancelFrom,leftEnd);
-      equationNode.replaceChildren(intermediate.text.slice(0,intermediate.cancelFrom),cancelled,intermediate.text.slice(leftEnd));
+      cancelled.append(equationContent(intermediate.text.slice(intermediate.cancelFrom,leftEnd)));
+      equationNode.replaceChildren(
+        equationContent(intermediate.text.slice(0,intermediate.cancelFrom)),
+        cancelled,
+        equationContent(intermediate.text.slice(leftEnd))
+      );
     }else{
-      equationNode.textContent=intermediate?.text??equation(state);
+      equationNode.replaceChildren(equationContent(intermediate?.text??equation(state)));
     }
     syncQuestionClock();
     const group=groupFor(state);
