@@ -125,7 +125,8 @@ button:not(:disabled):active { transform: translateY(1px); }
   text-align: center;
   overflow-wrap: anywhere;
 }
-:is(.equation, .operation-symbol, .card, .falling) math { font-family: inherit; font-size: inherit; }
+:is(.equation, .operation-symbol, .card, .falling, .applied-equation, .history-equation, .token) math { font-family: inherit; font-size: inherit; }
+.history-equation, .token math { font-family: var(--math-display); }
 [data-mode=drop] .equation { background: #f2fbeb; }
 #equation[data-simplifying] { background: #ffefb8; color: #56380c; }
 .cancel-pair { display: inline-block; position: relative; white-space: pre; }
@@ -143,6 +144,9 @@ button:not(:disabled):active { transform: translateY(1px); }
 .pans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(9px,4vw,30px); text-align: center; }
 @media (prefers-reduced-motion: no-preference) {
   .board[data-practice-drop=true] .pans { margin-top: clamp(56px, 8vw, 96px); }
+  @media (min-width: 850px) {
+    .board[data-practice-drop=true] .pans { margin-top: clamp(128px, 22vh, 192px); }
+  }
 }
 .pan-side { display: grid; grid-template-rows: auto 1fr; min-width: 0; }
 .pan-label { display: block; font-size: .71rem; font-weight: 740; margin-bottom: 3px; }
@@ -248,7 +252,7 @@ button:not(:disabled):active { transform: translateY(1px); }
 #feedback { margin-top: 8px; min-height: 1.5em; color: var(--muted); }
 #feedback.error { color: #9a3627; }
 #feedback.good { color: #155c44; font-weight: 750; }
-.applied-equation { margin-top: 5px; color: #26584d; font: 700 1rem/1.55 var(--math); overflow-wrap: anywhere; }
+.applied-equation { margin-top: 5px; color: #26584d; font: 700 1rem/1.55 var(--math-display); overflow-wrap: anywhere; }
 #moveCount { color: var(--muted); font-size: .87rem; font-variant-numeric: tabular-nums; }
 #signPenalty { color: #8b3d20; font-weight: 740; margin-top: 4px; }
 .score-panel { margin-top: 10px; padding: 8px 10px; color: #4d3814; background: #fff1c6; border-radius: 10px; }
@@ -750,7 +754,7 @@ body > footer a { color: var(--green); }
         const token=document.createElement('span');
         token.className=style;
         if(label.startsWith('−'))token.classList.add('negative');
-        token.textContent=label;
+        token.append(equationContent(label));
         tokens.push(token);
       }
       $(id).replaceChildren(...tokens);
@@ -760,7 +764,7 @@ body > footer a { color: var(--green); }
     for(let i=0;i<boxes;i++){
       const token = document.createElement('span');
       token.className='token variable';
-      token.textContent='x';
+      token.append(equationContent('x'));
       nodes.push(token);
     }
     const weightsToken = document.createElement('span');
@@ -904,16 +908,30 @@ body > footer a { color: var(--green); }
     }
   }
   function equationContent(text){
-    const parts=text.split('x');
     const content=document.createDocumentFragment();
-    content.append(parts[0]);
-    for(const part of parts.slice(1)){
-      const math=document.createElementNS('http://www.w3.org/1998/Math/MathML','math');
-      const identifier=document.createElementNS(math.namespaceURI,'mi');
-      identifier.textContent='x';
-      math.append(identifier);
-      content.append(math,part);
+    const mathElement=name=>document.createElementNS('http://www.w3.org/1998/Math/MathML',name);
+    let cursor=0;
+    for(const match of text.matchAll(/\((\d+)\/(\d+)\)(?=x)|(\d+)\/(\d+)|x/g)){
+      content.append(text.slice(cursor,match.index));
+      const math=mathElement('math');
+      const numerator=match[1]??match[3];
+      if(numerator!==undefined){
+        const fraction=mathElement('mfrac');
+        for(const value of [numerator,match[2]??match[4]]){
+          const number=mathElement('mn');
+          number.textContent=value;
+          fraction.append(number);
+        }
+        math.append(fraction);
+      }else{
+        const identifier=mathElement('mi');
+        identifier.textContent='x';
+        math.append(identifier);
+      }
+      content.append(math);
+      cursor=match.index+match[0].length;
     }
+    content.append(text.slice(cursor));
     return content;
   }
   function render() {
@@ -977,11 +995,14 @@ body > footer a { color: var(--green); }
     const applied=latest.operation&&latest.operation!=='open'
       ?sameOperation(history.at(-2).state,latest.operation,latest.amount):'';
     $('appliedEquation').hidden=!applied;
-    $('appliedEquation').textContent=applied;
+    $('appliedEquation').replaceChildren(equationContent(applied));
     $('history').replaceChildren(...history.map(({state,operation,amount,expanded},i)=>{
       const li=document.createElement('li');
       const before=expanded||(operation&&sameOperation(history[i-1].state,operation,amount));
-      li.textContent=(before?before+' → ':'')+equation(state)+' · '+(operation==='open'?w.opened:operation?w.explain[operation](amount):w.initial);
+      const expression=document.createElement('span');
+      expression.className='history-equation';
+      expression.append(equationContent((before?before+' → ':'')+equation(state)));
+      li.append(expression,' · '+(operation==='open'?w.opened:operation?w.explain[operation](amount):w.initial));
       return li;
     }));
     $('history').scrollTop=$('history').scrollHeight;
