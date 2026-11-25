@@ -1050,7 +1050,8 @@ body > footer a { color: var(--green); }
     const furthest=Math.max(...falling.map(({distance})=>distance));
     // A fixed duration keeps short drops on narrow screens easy to follow.
     const duration=challengeRun?.active?450:800;
-    const launch=performance.now();
+    // Show the operation on both cards before they start moving in practice.
+    const launch=performance.now()+(challengeRun?.active?0:220);
     function frame(now){
       const progress=Math.max(0,(now-launch)/duration);
       if(progress>=1){
