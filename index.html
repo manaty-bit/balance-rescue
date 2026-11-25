@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>てんびんレスキュー | MANATY LAB</title>
 <style>
+@font-face {
+  font-family: "Latin Modern Math";
+  src: url("./fonts/latinmodern-math.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 :root {
   color-scheme: light;
   font: 16px/1.5 system-ui, -apple-system, "Hiragino Sans", "Yu Gothic", sans-serif;
@@ -105,7 +112,7 @@ button:not(:disabled):active { transform: translateY(1px); }
   color: #133d33;
   background: #fffdfa;
   box-shadow: 0 2px 0 #42846028;
-  font: 700 clamp(1.52rem, 4.5vw, 2.65rem)/1.25 system-ui, sans-serif;
+  font: 400 clamp(1.52rem, 4.5vw, 2.65rem)/1.25 "Latin Modern Math", var(--math);
   text-align: center;
   overflow-wrap: anywhere;
 }
