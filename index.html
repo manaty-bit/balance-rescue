@@ -1048,20 +1048,20 @@ body > footer a { color: var(--green); }
       return {chip,distance};
     });
     const furthest=Math.max(...falling.map(({distance})=>distance));
-    const gravity=1080;
-    const startSpeed=18;
+    // A fixed duration keeps short drops on narrow screens easy to follow.
+    const duration=challengeRun?.active?450:800;
     const launch=performance.now();
     function frame(now){
-      const t=Math.max(0,(now-launch)/1000);
-      const travel=startSpeed*t+gravity*t*t/2;
-      if(travel>=furthest){
+      const progress=Math.max(0,(now-launch)/duration);
+      if(progress>=1){
         falling.forEach(({chip})=>chip.remove());
         onImpact();
-        settle(targets,startSpeed+gravity*t);
+        settle(targets,2*furthest/(duration/1000));
         return;
       }
+      const travel=progress*progress;
       for(const {chip,distance} of falling){
-        chip.style.transform=`translate(-50%, ${travel*distance/furthest}px)`;
+        chip.style.transform=`translate(-50%, ${travel*distance}px)`;
       }
       requestAnimationFrame(frame);
     }
