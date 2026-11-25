@@ -125,8 +125,8 @@ button:not(:disabled):active { transform: translateY(1px); }
   text-align: center;
   overflow-wrap: anywhere;
 }
-:is(.equation, .operation-symbol, .card, .falling, .applied-equation, .history-equation, .token) math { font-family: inherit; font-size: inherit; }
-.history-equation, .token math { font-family: var(--math-display); }
+:is(.equation, .operation-symbol, .card, .falling, .applied-equation, .history-equation, .token, .shape) math { font-family: inherit; font-size: inherit; }
+.history-equation, .token math, .shape-status math { font-family: var(--math-display); }
 [data-mode=drop] .equation { background: #f2fbeb; }
 #equation[data-simplifying] { background: #ffefb8; color: #56380c; }
 .cancel-pair { display: inline-block; position: relative; white-space: pre; }
@@ -267,7 +267,7 @@ button:not(:disabled):active { transform: translateY(1px); }
 #scoreRule { margin-top: 2px; font-size: .8rem; color: #614a20; }
 .shape-panel h2, .history-panel h2 { margin-bottom: 7px; }
 .shapes { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; margin-bottom: 7px; }
-.shape { border: 1px solid var(--line); background: #eef4eb; border-radius: 8px; padding: 3px 7px; font: 700 1rem/1.45 var(--math); overflow-wrap: anywhere; min-width: 0; }
+.shape { border: 1px solid var(--line); background: #eef4eb; border-radius: 8px; padding: 3px 7px; font: 400 1rem/1.45 var(--math-display); overflow-wrap: anywhere; min-width: 0; }
 .shape[aria-current=step] { color: white; background: #21604f; border-color: #21604f; }
 .shape-arrow, .shape-status { color: #315e4f; }
 .shape-status { font-size: .92rem; }
@@ -802,7 +802,7 @@ body > footer a { color: var(--green); }
     if(index<0){
       const chip=document.createElement('span');
       chip.className='shape';
-      chip.textContent=equation(state);
+      chip.append(equationContent(equation(state)));
       chip.setAttribute('aria-current','step');
       nodes.push(chip);
     }
@@ -815,7 +815,7 @@ body > footer a { color: var(--green); }
       }
       const chip=document.createElement('span');
       chip.className='shape';
-      chip.textContent=symbols[i];
+      chip.append(equationContent(symbols[i],true));
       if(i===index)chip.setAttribute('aria-current','step');
       nodes.push(chip);
     }
@@ -829,7 +829,8 @@ body > footer a { color: var(--green); }
       return dot;
     }));
     const prompt=stage===2&&index<3&&feedback!=='hint'?w.challengeShape(w.formNames[index]):w.goalNames[index];
-    $('shapeStatus').textContent=index===-2?w.openFirst:shapeGained&&form(history.at(-2).state)===-2?w.openDone:index===-1?w.scalePrompt:shapeGained&&form(history.at(-2).state)===-1?w.scaleDone:shapeGained?w.reached(w.formNames[index],stage===2&&index<3?w.familiar:w.goalNames[index]):prompt;
+    const status=index===-2?w.openFirst:shapeGained&&form(history.at(-2).state)===-2?w.openDone:index===-1?w.scalePrompt:shapeGained&&form(history.at(-2).state)===-1?w.scaleDone:shapeGained?w.reached(w.formNames[index],stage===2&&index<3?w.familiar:w.goalNames[index]):prompt;
+    $('shapeStatus').replaceChildren(equationContent(status));
     const last=problem===activeLevel().length-1;
     $('next').textContent=stage===-1?w.practiceDone:challengeRun?.active?w.next:last?(stage===levels.length-1?w.again:w.nextStage):w.next;
     const board=document.querySelector('.board');
@@ -917,11 +918,14 @@ body > footer a { color: var(--green); }
       questionClock.since=null;
     }
   }
-  function equationContent(text){
+  function equationContent(text,withCoefficients=false){
     const content=document.createDocumentFragment();
     const mathElement=name=>document.createElementNS('http://www.w3.org/1998/Math/MathML',name);
     let cursor=0;
-    for(const match of text.matchAll(/\((\d+)\/(\d+)\)(?=x)|(\d+)\/(\d+)|x/g)){
+    const tokens=withCoefficients
+      ? /(?<![a-z])[abcdx]+(?![a-z])/gi
+      : /\((\d+)\/(\d+)\)(?=x)|(\d+)\/(\d+)|(?<![a-z])x(?![a-z])/g;
+    for(const match of text.matchAll(tokens)){
       content.append(text.slice(cursor,match.index));
       const math=mathElement('math');
       const numerator=match[1]??match[3];
@@ -934,9 +938,11 @@ body > footer a { color: var(--green); }
         }
         math.append(fraction);
       }else{
-        const identifier=mathElement('mi');
-        identifier.textContent='x';
-        math.append(identifier);
+        for(const variable of match[0]){
+          const identifier=mathElement('mi');
+          identifier.textContent=variable;
+          math.append(identifier);
+        }
       }
       content.append(math);
       cursor=match.index+match[0].length;
