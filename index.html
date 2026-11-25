@@ -20,6 +20,7 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 0; }
+[data-mode=drop] .mode-tabs [aria-pressed=true] { color: #fff; background: var(--green); }
 body > header, main, body > footer { width: min(100% - 36px, 1080px); margin-inline: auto; }
 body > header { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 8px; }
 .brand { display: flex; align-items: center; gap: 8px; color: var(--green); font-weight: 850; letter-spacing: .055em; font-size: .82rem; }
@@ -123,6 +124,9 @@ button:not(:disabled):active { transform: translateY(1px); }
 }
 @keyframes cancel { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .pans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(9px,4vw,30px); text-align: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .board[data-practice-drop=true] .pans { margin-top: clamp(56px, 8vw, 96px); }
+}
 .pan-side { display: grid; grid-template-rows: auto 1fr; min-width: 0; }
 .pan-label { display: block; font-size: .71rem; font-weight: 740; margin-bottom: 3px; }
 .pan {
@@ -172,7 +176,26 @@ button:not(:disabled):active { transform: translateY(1px); }
 .controls { display: flex; gap: 7px; align-items: end; flex-wrap: wrap; }
 .controls label { display: grid; gap: 3px; min-width: 0; font-size: .88rem; font-weight: 680; }
 .controls input { width: 76px; }
-#operation { max-width: 100%; font-weight: 500; }
+.quiz-operations, .quiz-keypad { flex: 0 0 100%; margin: 0 0 4px; padding: 0; border: 0; min-width: 0; }
+.quiz-operations legend { padding: 0; font-size: .88rem; font-weight: 680; }
+.operation-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 6px; }
+.operation-options label { position: relative; }
+.operation-options input { position: absolute; opacity: 0; inset: 0; margin: 0; width: 100%; height: 100%; cursor: pointer; }
+.operation-face { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; min-height: 44px; padding: 6px; text-align: center; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.operation-face b { font-size: 1.15rem; white-space: nowrap; }
+.operation-options input:checked + .operation-face { border-color: var(--green); color: var(--green); background: #e2f6e9; box-shadow: inset 0 0 0 1px var(--green); }
+.operation-options input:focus-visible + .operation-face { outline: 3px solid var(--focus); outline-offset: 2px; }
+.operation-options input:disabled { cursor: default; }
+.operation-options input:disabled + .operation-face { opacity: .62; }
+.quiz-keypad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; max-width: 19rem; padding: 8px; background: #edf4ed; border-radius: 12px; }
+.quiz-keypad label { grid-column: 1 / -1; grid-template-columns: auto minmax(0, 1fr); align-items: center; }
+.quiz-keypad input { width: 100%; text-align: end; font-variant-numeric: tabular-nums; }
+.quiz-keypad button { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.quiz-keypad button[data-step] { background: #dcebe1; }
+.drop-action { display: grid; }
+#drop { min-height: 48px; box-shadow: 0 3px 0 #083c2e; }
+#drop:disabled { box-shadow: none; }
+#dropPreview { grid-column: 1 / -1; color: var(--muted); font-size: .88rem; min-height: 1.5em; }
 .drop-controls { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 9px; margin-bottom: 10px; }
 .drop-controls strong { font-size: .88rem; }
 .cards { display: flex; gap: 7px; flex-wrap: wrap; margin: 6px 0 3px; }
@@ -248,7 +271,6 @@ body > footer a { color: var(--green); }
   .pan, [data-mode=drop] .pan { min-height: 61px; }
   .workbench, .guidance, .play-layout { gap: 10px; }
   .drop-controls { grid-template-columns: 1fr; }
-  #drop { justify-self: stretch; }
 }
 @media (prefers-reduced-motion: reduce) {
   .card { transition: none; }
@@ -256,17 +278,17 @@ body > footer a { color: var(--green); }
 }
 </style>
 </head>
-<body>
+<body data-mode="drop">
 <header><span class="brand"><span class="brand-mark" aria-hidden="true">±</span>MANATY LAB</span><button id="language" type="button" lang="en">EN</button></header>
 <main>
 <div class="intro">
- <div><h1 data-label="title">てんびんレスキュー</h1><p data-label="intro">両方の皿に同じ操作をして、左に x を1つだけ残そう。</p></div>
+ <div><h1 data-label="title">てんびんレスキュー</h1><p data-label="intro">カードを選んで落とそう。着地すると両辺の式が変わるよ。左に x、右に数だけ残せばクリア！</p></div>
  <label class="stage-label"><span data-label="level">ステージ</span> <select id="stage"></select></label>
 </div>
 <div class="toolbar">
 <div class="mode-tabs" role="group" aria-label="遊び方">
- <button id="quizMode" type="button" data-label="quizMode" aria-pressed="true">クイズ版</button>
- <button id="dropMode" type="button" data-label="dropMode" aria-pressed="false">落ちゲー版</button>
+ <button id="dropMode" type="button" data-label="dropMode" aria-pressed="true">落ちゲー版</button>
+ <button id="quizMode" type="button" data-label="quizMode" aria-pressed="false">クイズ版</button>
 </div>
 <div class="session-tools">
  <button id="practice" type="button" data-label="practice">0 · あそび方</button>
@@ -299,11 +321,36 @@ body > footer a { color: var(--green); }
  </div>
  <div id="dropControls" class="drop-controls" hidden>
  <div><strong data-label="chooseCard">落とすカードを選ぶ</strong><div class="cards" id="cards"></div></div>
- <button type="button" class="primary" id="drop" data-label="drop">両皿に落とす ↓</button>
+ <div class="drop-action"><button type="button" class="primary" id="drop" data-label="drop" aria-describedby="dropPreview" disabled>両皿に落とす ↓</button></div>
+ <p id="dropPreview" role="status"></p>
 </div>
 <form class="controls" id="controls">
-  <label class="quiz-action"><span data-label="operation">両辺にする操作</span><select id="operation"></select></label>
-  <label class="quiz-action"><span id="amountLabel" data-label="amount">数</span><input id="amount" type="number" inputmode="numeric" min="1" max="1000000000" step="1" value="1" required></label>
+  <fieldset id="operation" class="quiz-action quiz-operations" hidden>
+   <legend data-label="operation">両辺にする操作</legend>
+   <div class="operation-options">
+    <label><input type="radio" name="operation" value="add"><span class="operation-face"><b aria-hidden="true">+</b><span data-label="quizAdd"></span></span></label>
+    <label><input type="radio" name="operation" value="subtract" checked><span class="operation-face"><b aria-hidden="true">−</b><span data-label="quizSubtract"></span></span></label>
+    <label><input type="radio" name="operation" value="multiply"><span class="operation-face"><b aria-hidden="true">×</b><span data-label="quizMultiply"></span></span></label>
+    <label><input type="radio" name="operation" value="divide"><span class="operation-face"><b aria-hidden="true">÷</b><span data-label="quizDivide"></span></span></label>
+    <label><input type="radio" name="operation" value="addVariable"><span class="operation-face"><b aria-hidden="true">+x</b><span data-label="addVariable"></span></span></label>
+    <label><input type="radio" name="operation" value="remove"><span class="operation-face"><b aria-hidden="true">−x</b><span data-label="remove"></span></span></label>
+   </div>
+  </fieldset>
+  <fieldset id="quizKeypad" class="quiz-action quiz-keypad">
+   <label><span data-label="amount">数</span><input id="amount" type="number" inputmode="numeric" min="1" max="1000000000" step="1" value="1" required></label>
+   <button type="button" data-digit="7">7</button>
+   <button type="button" data-digit="8">8</button>
+   <button type="button" data-digit="9">9</button>
+   <button type="button" data-digit="4">4</button>
+   <button type="button" data-digit="5">5</button>
+   <button type="button" data-digit="6">6</button>
+   <button type="button" data-digit="1">1</button>
+   <button type="button" data-digit="2">2</button>
+   <button type="button" data-digit="3">3</button>
+   <button type="button" data-step="-1" aria-label="数を1減らす">−</button>
+   <button type="button" data-digit="0">0</button>
+   <button type="button" data-step="1" aria-label="数を1増やす">＋</button>
+  </fieldset>
   <button class="primary quiz-action" id="apply" type="submit" data-label="apply">両辺に適用</button>
   <button id="undo" type="button" data-label="undo">1手戻す</button>
   <button id="hint" type="button" data-label="hint">ヒント</button>
@@ -482,10 +529,10 @@ body > footer a { color: var(--green); }
       familiar:'ここからは前のステージで使った解き方が使えるよ。',
       personalBest:(n,best)=>`救出！ ${n}枚 ／ 自己ベスト ${best}枚`,
       quizMode:'クイズ版',dropMode:'落ちゲー版',chooseCard:'落とすカードを選ぶ',drop:'両皿に落とす ↓',
-      dropIntro:'カードを選んで両皿に落とそう。左に x、右に数だけ残せばクリア！',moves:(n,best)=>`使ったカード：${n}枚${best? ' ／ 最少 '+best+'枚':''}`,
+      dropIntro:'カードを選んで落とそう。着地すると両辺の式が変わるよ。左に x、右に数だけ残せばクリア！',dropReady:'同じカードが左右の皿に落ちます。',dropSelected:label=>`選んだカード：${label} を両皿へ`,dropFalling:'着地で両辺に同じ操作！',moves:(n,best)=>`使ったカード：${n}枚${best? ' ／ 最少 '+best+'枚':''}`,
       multiply:'同じ数をかける',
       level:'ステージ',stages:['1 · おもりを取り除く','2 · 同じ組に分ける','3 · 両側の x を取り除く','4 · 小数を整数に','5 · 分数を整数に','6 · かっこと符号'],
-      operation:'両辺にする操作',amount:'数',apply:'両辺に適用',undo:'1手戻す',hint:'ヒント',next:'次の問題',
+      quizAdd:'両辺にたす',quizSubtract:'両辺からひく',quizMultiply:'両辺にかける',quizDivide:'両辺をわる',increase:'数を1増やす',decrease:'数を1減らす',operation:'両辺にする操作',amount:'数',apply:'両辺に適用',undo:'1手戻す',hint:'ヒント',next:'次の問題',
       history:'式の変形',terms:'利用条件',initial:'はじめの式',
       add:'おもりを足す',subtract:'おもりを引く',remove:'x を引く',divide:'同じ数で割る',
       invalid:'1以上の整数を選ぼう。',addVariable:'x の箱を足す',
@@ -526,10 +573,10 @@ body > footer a { color: var(--green); }
       familiar:'Now you can use a move from an earlier stage.',
       personalBest:(n,best)=>`Rescued! ${n} cards · Best: ${best}`,
       quizMode:'Quiz',dropMode:'Balance Drop',chooseCard:'Choose a card',drop:'Drop on both pans ↓',
-      dropIntro:'Drop a card on both pans. Leave one x on the left and a number on the right to clear!',moves:(n,best)=>`Cards used: ${n}${best?' · Best: '+best:''}`,
+      dropIntro:'Pick a card and drop it. Both sides change when the cards land. Leave one x on the left and a number on the right to clear!',dropReady:'The same card drops onto both pans.',dropSelected:label=>`Selected: ${label} on both pans`,dropFalling:'The same move lands on both sides!',moves:(n,best)=>`Cards used: ${n}${best?' · Best: '+best:''}`,
       multiply:'Multiply by the same number',
       level:'Stage',stages:['1 · Remove weights','2 · Make equal groups','3 · Remove x from both sides','4 · Clear decimals','5 · Clear fractions','6 · Brackets and signs'],
-      operation:'Operation on both sides',amount:'Amount',apply:'Apply to both sides',undo:'Undo',hint:'Hint',next:'Next problem',
+      quizAdd:'Add to both sides',quizSubtract:'Subtract from both sides',quizMultiply:'Multiply both sides',quizDivide:'Divide both sides',increase:'Increase amount by 1',decrease:'Decrease amount by 1',operation:'Operation on both sides',amount:'Amount',apply:'Apply to both sides',undo:'Undo',hint:'Hint',next:'Next problem',
       history:'Equation steps',terms:'Terms of Use',initial:'Starting equation',
       add:'Add weights',subtract:'Subtract weights',remove:'Subtract x boxes',divide:'Divide by the same number',
       invalid:'Choose a whole number of at least 1.',addVariable:'Add x boxes',
@@ -550,7 +597,8 @@ body > footer a { color: var(--green); }
   const requestedStage = Number(preview.get('stage'));
   let stage = Number.isInteger(requestedStage)&&requestedStage>=1&&requestedStage<=levels.length?requestedStage-1:0;
   let language = 'ja', problem = 0, history = [], feedback = 'ready';
-  let mode = preview.get('mode')==='drop'?'drop':'quiz';
+  let replaceAmount = true;
+  let mode = preview.get('mode')==='quiz'?'quiz':'drop';
   let selectedCard = null, dropping = false, played = 0, shapeGained = false;
   let signs = null, signPenalty = 0, detoured = false;
   let intermediate = null, questionClock = {elapsed:0,since:null};
@@ -725,6 +773,12 @@ body > footer a { color: var(--green); }
     const board=document.querySelector('.board');
     board.dataset.cleared=String(index===3);
     board.dataset.aiming=String(Boolean(selectedCard)&&!dropping);
+    board.dataset.practiceDrop=String(mode==='drop'&&!challengeRun?.active);
+  }
+  function updateDropSelection(){
+    const w=copy();
+    $('drop').disabled=!selectedCard||dropping;
+    $('dropPreview').textContent=dropping?w.dropFalling:selectedCard?w.dropSelected(cardLabel(...selectedCard)):w.dropReady;
   }
   function renderDrop(done) {
     const active=mode==='drop'&&!groupFor(current());
@@ -734,7 +788,7 @@ body > footer a { color: var(--green); }
     $('moveCount').textContent=done&&bestMoves?copy().personalBest(played,bestMoves):copy().moves(played,bestMoves);
     if(!active||done)return;
     const available=cards(current(),played);
-    $('drop').disabled=!selectedCard||dropping;
+    updateDropSelection();
     $('cards').replaceChildren(...available.map(([operation,amount])=>{
       const button=document.createElement('button');
       button.type='button';
@@ -747,7 +801,7 @@ body > footer a { color: var(--green); }
       button.onclick=()=>{
         selectedCard=[operation,amount];
         for(const other of $('cards').children)other.setAttribute('aria-pressed',String(other===button));
-        $('drop').disabled=false;
+        updateDropSelection();
         document.querySelector('.board').dataset.aiming='true';
       };
       return button;
@@ -823,6 +877,8 @@ body > footer a { color: var(--green); }
     const done=solved(state);
     renderShape(state);
     renderDrop(done);
+    $('operation').disabled=done;
+    $('quizKeypad').disabled=done;
     $('apply').disabled=done;
     $('hint').disabled=done||dropping;
     const challengeActive=Boolean(challengeRun?.active);
@@ -873,6 +929,7 @@ body > footer a { color: var(--green); }
     shapeGained=false;
     selectedCard=null;
     $('amount').value=1;
+    replaceAmount=true;
     render();
   }
   function translate() {
@@ -881,16 +938,15 @@ body > footer a { color: var(--green); }
     document.querySelector('.board').setAttribute('aria-label',copy().balance);
     $('language').textContent=language==='ja'?'EN':'日本語';
     $('language').lang=language==='ja'?'en':'ja';
+    $('quizKeypad').querySelector('[data-step="1"]').setAttribute('aria-label',copy().increase);
+    $('quizKeypad').querySelector('[data-step="-1"]').setAttribute('aria-label',copy().decrease);
     document.body.dataset.mode=mode;
     for(const action of document.querySelectorAll('.quiz-action'))action.hidden=mode==='drop';
     $('quizMode').setAttribute('aria-pressed',String(mode==='quiz'));
     $('dropMode').setAttribute('aria-pressed',String(mode==='drop'));
     document.querySelector('[data-label="intro"]').textContent=copy()[mode==='drop'?'dropIntro':'intro'];
-    const selected=$('operation').value || 'subtract';
     $('stage').replaceChildren(...copy().stages.map((name,i)=>new Option(name,i)));
     $('stage').value=stage===-1?'':stage;
-    $('operation').replaceChildren(...['subtract','remove','divide','add','addVariable','multiply'].map(key=>new Option(copy()[key],key)));
-    $('operation').value=selected;
     render();
   }
   function perform(operation,amount){
@@ -928,9 +984,28 @@ body > footer a { color: var(--green); }
     }
     complete();
   }
+  $('amount').addEventListener('input',()=>{replaceAmount=false;});
+  $('quizKeypad').addEventListener('click',event=>{
+    const button=event.target.closest('button');
+    if(!button)return;
+    const amount=$('amount');
+    const currentAmount=amount.valueAsNumber||0;
+    const max=Number(amount.max);
+    if(button.dataset.step){
+      amount.value=Math.max(1,Math.min(max,currentAmount+Number(button.dataset.step)));
+      replaceAmount=true;
+      return;
+    }
+    const value=(replaceAmount?0:currentAmount)*10+Number(button.dataset.digit);
+    if(value<=max)amount.value=value;
+    replaceAmount=false;
+  });
   $('controls').addEventListener('submit',event=>{
     event.preventDefault();
-    if(mode==='quiz'&&!groupFor(current())&&!solved(current()))perform($('operation').value,$('amount').valueAsNumber);
+    if(mode==='quiz'&&!groupFor(current())&&!solved(current())){
+      perform($('controls').elements.operation.value,$('amount').valueAsNumber);
+      replaceAmount=true;
+    }
   });
   function settle(targets,speed){
     const seconds=.32;
@@ -960,6 +1035,7 @@ body > footer a { color: var(--green); }
       return;
     }
     const board=document.querySelector('.board');
+    if(!challengeRun?.active)board.scrollIntoView({block:'nearest',behavior:'instant'});
     const bounds=board.getBoundingClientRect();
     const startY=$('equation').getBoundingClientRect().bottom-bounds.top+3;
     const falling=targets.map(pan=>{
@@ -977,20 +1053,21 @@ body > footer a { color: var(--green); }
       return {chip,distance};
     });
     const furthest=Math.max(...falling.map(({distance})=>distance));
-    const gravity=1080;
-    const startSpeed=18;
-    const launch=performance.now();
+    // A fixed duration keeps short drops on narrow screens easy to follow.
+    const duration=challengeRun?.active?450:1450;
+    // Show the operation on both cards before they start moving in practice.
+    const launch=performance.now()+(challengeRun?.active?0:220);
     function frame(now){
-      const t=Math.max(0,(now-launch)/1000);
-      const travel=startSpeed*t+gravity*t*t/2;
-      if(travel>=furthest){
+      const progress=Math.max(0,(now-launch)/duration);
+      if(progress>=1){
         falling.forEach(({chip})=>chip.remove());
         onImpact();
-        settle(targets,startSpeed+gravity*t);
+        settle(targets,2*furthest/(duration/1000));
         return;
       }
+      const travel=progress*progress;
       for(const {chip,distance} of falling){
-        chip.style.transform=`translate(-50%, ${travel*distance/furthest}px)`;
+        chip.style.transform=`translate(-50%, ${travel*distance}px)`;
       }
       requestAnimationFrame(frame);
     }
@@ -1037,7 +1114,7 @@ body > footer a { color: var(--green); }
       openedPan.classList.add('box-open');
       openedPan.addEventListener('animationend',()=>openedPan.classList.remove('box-open'),{once:true});
     }
-    (mode==='drop'?$('cards').firstElementChild:$('operation')).focus({preventScroll:true});
+    focusOperation({preventScroll:true});
   };
   $('drop').onclick=()=>{
     if(!selectedCard||dropping||solved(current()))return;
@@ -1058,6 +1135,10 @@ body > footer a { color: var(--green); }
     feedback='ready';
     render();
   };
+  function focusOperation(options){
+    const target=groupFor(current())?$('openGroup'):mode==='drop'?$('cards').firstElementChild:$('operation').querySelector(':checked');
+    target?.focus(options);
+  }
   function switchMode(next){
     if(mode===next||challengeRun?.active)return;
     mode=next;
@@ -1097,7 +1178,7 @@ body > footer a { color: var(--green); }
     }
     problem++;
     start();
-    (mode==='drop'?$('cards').firstElementChild:$('operation')).focus();
+    focusOperation();
   };
   $('language').onclick=()=>{language=language==='ja'?'en':'ja';translate();};
   function updateClock(){
@@ -1112,7 +1193,7 @@ body > footer a { color: var(--green); }
     challengeRun.score++;
     problem=(problem+1)%challengeLevels.length;
     start();
-    (mode==='drop'?$('cards').firstElementChild:$('operation')).focus({preventScroll:true});
+    focusOperation({preventScroll:true});
   }
   function finishChallenge(){
     if(!challengeRun?.active)return;
