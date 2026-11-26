@@ -857,37 +857,30 @@ body > footer a { color: var(--green); }
     $(group.side).replaceChildren(equationContent(before),chip,equationContent(after));
   }
   function pan(id,boxes,weights,scale,forceFraction=false) {
-    if(scale>1||boxes<0||weights<0||boxes>8){
-      const tokens=[];
-      for(const [label,style] of [[boxes?xTerm(boxes,scale):'','token variable'],[weights||!boxes?number(weights,scale,forceFraction):'','token']]){
-        if(!label)continue;
-        const token=document.createElement('span');
-        token.className=style;
-        if(label.startsWith('−'))token.classList.add('negative');
-        const value=document.createElement('span');
-        value.className='token-value';
-        value.append(equationContent(label));
-        token.append(value);
-        tokens.push(token);
+    const nodes=[];
+    function token(label,variable=false,negative=false){
+      const node=document.createElement('span');
+      node.className='token'+(variable?' variable':'')+(negative?' negative':'');
+      const value=document.createElement('span');
+      value.className='token-value';
+      value.append(equationContent(label));
+      node.append(value);
+      nodes.push(node);
+    }
+    if(scale>1){
+      // Fractional coefficients and constants retain their exact values.
+      if(boxes)token(xTerm(boxes,scale),true,boxes<0);
+      if(weights)token(number(weights,scale,forceFraction),false,weights<0);
+    }else{
+      if(Math.abs(boxes)>8)token(xTerm(boxes,1),true,boxes<0);
+      else for(let i=0;i<Math.abs(boxes);i++)token(boxes<0?'−x':'x',true,boxes<0);
+      if(Math.abs(weights)>8){
+        token(weights<0?Math.abs(weights)+' × (−1)':weights+' × 1',false,weights<0);
+      }else{
+        for(let i=0;i<Math.abs(weights);i++)token(weights<0?'−1':'1',false,weights<0);
       }
-      $(id).replaceChildren(...tokens);
-      return;
     }
-    const nodes = [];
-    for(let i=0;i<boxes;i++){
-      const token = document.createElement('span');
-      token.className='token variable';
-      token.append(equationContent('x'));
-      nodes.push(token);
-    }
-    const weightsToken = document.createElement('span');
-    weightsToken.className='token';
-    weightsToken.textContent=weights>8?weights+' × 1':'1';
-    for(let i=0;i<Math.min(weights,8);i++){
-      nodes.push(weightsToken.cloneNode(true));
-      if(weights>8)break;
-    }
-    if(!nodes.length)weightsToken.textContent='0',nodes.push(weightsToken);
+    if(!nodes.length)token('0');
     $(id).replaceChildren(...nodes);
   }
   function hint(state) {
