@@ -285,7 +285,9 @@ button:not(:disabled):active { transform: translateY(1px); }
 .sign-options > span { min-width: 6em; }
 .sign-sign { min-width: 44px; }
 .sign-options button[aria-pressed=true] { background: var(--green); color: white; }
-.sign-math { font: 700 1.16rem/1.5 var(--math); }
+.sign-math { font: 700 1.16rem/1.5 var(--math-display); }
+.group-token, .group-payload { font-family: var(--math-display); }
+.sign-math math, .group-token math, .group-payload math, .sign-options math, #feedback math, #dropPreview math, .intro math, .steps math, #practiceGuide math, #stageName math, .stage-nav math { font-family: var(--math-display); font-size: 1em; }
 #checkSigns { margin-top: 7px; }
 .award-dialog { color: var(--ink); background: var(--paper); border: 1px solid #adc7ba; border-radius: 18px; width: min(32rem, calc(100% - 24px)); max-height: 90dvh; padding: 18px; }
 .award-dialog::backdrop { background: #102c3080; }
@@ -850,9 +852,9 @@ body > footer a { color: var(--green); }
     const openParenthesis=box.indexOf('(');
     const payload=document.createElement('span');
     payload.className='group-payload';
-    payload.textContent=box.slice(openParenthesis);
-    chip.append(box.slice(0,openParenthesis),payload);
-    $(group.side).replaceChildren(before,chip,after);
+    payload.replaceChildren(equationContent(box.slice(openParenthesis)));
+    chip.append(equationContent(box.slice(0,openParenthesis)),payload);
+    $(group.side).replaceChildren(equationContent(before),chip,equationContent(after));
   }
   function pan(id,boxes,weights,scale,forceFraction=false) {
     if(scale>1||boxes<0||weights<0||boxes>8){
@@ -942,7 +944,7 @@ body > footer a { color: var(--green); }
   function updateDropSelection(){
     const w=copy();
     $('drop').disabled=!selectedCard||dropping;
-    $('dropPreview').textContent=dropping?w.dropFalling:selectedCard?w.dropSelected(cardLabel(...selectedCard)):w.dropReady;
+    $('dropPreview').replaceChildren(equationContent(dropping?w.dropFalling:selectedCard?w.dropSelected(cardLabel(...selectedCard)):w.dropReady));
   }
   function renderDrop(done) {
     const active=mode==='drop'&&!groupFor(current());
@@ -982,7 +984,7 @@ body > footer a { color: var(--green); }
     $('signQuestion').hidden=!signs;
     if(!signs)return;
     const symbols=signs.map(value=>value===1?'+':value===-1?'−':'□');
-    $('expandedPreview').textContent=symbols[0]+' '+Math.abs(group.multiplier)+'x '+symbols[1]+' '+Math.abs(group.multiplier*group.inside);
+    $('expandedPreview').replaceChildren(equationContent(symbols[0]+' '+xTerm(Math.abs(group.multiplier),1)+' '+symbols[1]+' '+Math.abs(group.multiplier*group.inside)));
     $('checkSigns').disabled=signs.some(value=>value===0);
     $('signChoices').replaceChildren(...w.signLabel.map((label,i)=>{
       const row=document.createElement('div');
@@ -990,7 +992,7 @@ body > footer a { color: var(--green); }
       row.setAttribute('role','group');
       row.setAttribute('aria-label',label);
       const title=document.createElement('span');
-      title.textContent=label;
+      title.replaceChildren(equationContent(label));
       row.append(title);
       for(const value of [1,-1]){
         const button=document.createElement('button');
@@ -1089,7 +1091,7 @@ body > footer a { color: var(--green); }
       if(active)button.setAttribute('aria-current','step');
       else button.removeAttribute('aria-current');
     }
-    $('stageName').textContent=stage===-1?w.practice:w.stages[stage];
+    $('stageName').replaceChildren(equationContent(stage===-1?w.practice:w.stages[stage]));
     $('quizMode').disabled=blocked;
     $('dropMode').disabled=blocked;
     $('records').disabled=blocked;
@@ -1120,7 +1122,7 @@ body > footer a { color: var(--green); }
       const expression=document.createElement('span');
       expression.className='history-equation';
       expression.append(equationContent((before?before+' → ':'')+equation(state)));
-      li.append(expression,' · '+(operation==='open'?w.opened:operation?w.explain[operation](amount):w.initial));
+      li.append(expression,' · ',equationContent(operation==='open'?w.opened:operation?w.explain[operation](amount):w.initial));
       return li;
     }));
     $('history').scrollTop=$('history').scrollHeight;
@@ -1143,7 +1145,7 @@ body > footer a { color: var(--green); }
   }
   function translate() {
     document.documentElement.lang=language;
-    document.querySelectorAll('[data-label]').forEach(el=>el.textContent=copy()[el.dataset.label]);
+    document.querySelectorAll('[data-label]').forEach(el=>el.replaceChildren(equationContent(copy()[el.dataset.label])));
     document.querySelector('.board').setAttribute('aria-label',copy().balance);
     $('language').textContent=language==='ja'?'EN':'日本語';
     $('language').lang=language==='ja'?'en':'ja';
@@ -1154,7 +1156,7 @@ body > footer a { color: var(--green); }
     for(const action of document.querySelectorAll('.quiz-action'))action.hidden=mode==='drop';
     $('quizMode').setAttribute('aria-pressed',String(mode==='quiz'));
     $('dropMode').setAttribute('aria-pressed',String(mode==='drop'));
-    document.querySelector('[data-label="intro"]').textContent=copy()[mode==='drop'?'dropIntro':'intro'];
+    document.querySelector('[data-label="intro"]').replaceChildren(equationContent(copy()[mode==='drop'?'dropIntro':'intro']));
     for(const button of $('stage').querySelectorAll('button')){
       const index=Number(button.dataset.stage);
       const stageTitle=index===-1?copy().practice:copy().stages[index];
