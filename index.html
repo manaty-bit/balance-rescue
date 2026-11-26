@@ -283,10 +283,11 @@ button:not(:disabled):active { transform: translateY(1px); }
 .sign-board { background: #fff6da; border: 1px solid #ddc58c; border-radius: 13px; padding: 10px; margin-bottom: 10px; }
 .sign-line, .sign-options { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; margin-top: 5px; }
 .sign-options > span { min-width: 6em; }
-.sign-sign { min-width: 44px; }
+.sign-sign { min-width: 44px; font: 400 1.25rem/1.2 var(--math-display); }
 .sign-options button[aria-pressed=true] { background: var(--green); color: white; }
-.sign-math { font: 700 1.16rem/1.5 var(--math-display); }
-.group-token, .group-payload { font-family: var(--math-display); }
+.sign-math { font: 400 1.16rem/1.5 var(--math-display); }
+.group-token, .group-term, .sign-product { font-family: var(--math-display); font-weight: 400; }
+.group-term math { font: inherit; }
 .sign-math math, .group-token math, .group-payload math, .sign-options math, #feedback math, #dropPreview math, .intro math, .steps math, #practiceGuide math, #stageName math, .stage-nav math { font-family: var(--math-display); font-size: 1em; }
 #checkSigns { margin-top: 7px; }
 .award-dialog { color: var(--ink); background: var(--paper); border: 1px solid #adc7ba; border-radius: 18px; width: min(32rem, calc(100% - 24px)); max-height: 90dvh; padding: 18px; }
@@ -854,7 +855,13 @@ body > footer a { color: var(--green); }
     payload.className='group-payload';
     payload.replaceChildren(equationContent(box.slice(openParenthesis)));
     chip.append(equationContent(box.slice(0,openParenthesis)),payload);
-    $(group.side).replaceChildren(equationContent(before),chip,equationContent(after));
+    const terms=[before,after].map(text=>{
+      const term=document.createElement('span');
+      term.className='group-term';
+      term.append(equationContent(text));
+      return text?term:'';
+    });
+    $(group.side).replaceChildren(terms[0],chip,terms[1]);
   }
   function pan(id,boxes,weights,scale,forceFraction=false) {
     if(scale>1||boxes<0||weights<0||boxes>8){
@@ -1110,8 +1117,17 @@ body > footer a { color: var(--green); }
     const [pa,pb,pc,pd,originalScale=1]=history[0].state;
     const latest=history.at(-1);
     const signError=group&&(feedback==='signX'||feedback==='signNumber');
-    const feedbackText=signError?w[feedback](signProduct(group,feedback)):done?w.success(number(d,scale,true),number(pa*d+pb*scale,originalScale*scale),number(pc*d+pd*scale,originalScale*scale)):feedback==='hint'?hint(state):feedback==='step'?(history.at(-1).operation==='open'?w.opened:detoured?w.complex:w.explain[history.at(-1).operation](history.at(-1).amount)):w[feedback];
-    $('feedback').replaceChildren(equationContent(feedbackText));
+    const product=signError?signProduct(group,feedback):'';
+    const feedbackText=signError?w[feedback](product):done?w.success(number(d,scale,true),number(pa*d+pb*scale,originalScale*scale),number(pc*d+pd*scale,originalScale*scale)):feedback==='hint'?hint(state):feedback==='step'?(history.at(-1).operation==='open'?w.opened:detoured?w.complex:w.explain[history.at(-1).operation](history.at(-1).amount)):w[feedback];
+    if(signError){
+      const position=feedbackText.indexOf(product);
+      const calculation=document.createElement('span');
+      calculation.className='sign-product';
+      calculation.textContent=product;
+      $('feedback').replaceChildren(feedbackText.slice(0,position),calculation,feedbackText.slice(position+product.length));
+    }else{
+      $('feedback').replaceChildren(equationContent(feedbackText));
+    }
     const applied=latest.operation&&latest.operation!=='open'
       ?sameOperation(history.at(-2).state,latest.operation,latest.amount):'';
     $('appliedEquation').hidden=!applied;
