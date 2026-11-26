@@ -224,10 +224,11 @@ button:not(:disabled):active { transform: translateY(1px); }
 .operation-options input:disabled { cursor: default; }
 .operation-options input:disabled + .operation-face { opacity: .62; }
 .quiz-keypad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; padding: 6px; background: #edf4ed; border-radius: 12px; }
-.quiz-keypad label { grid-column: 1 / -1; grid-template-columns: auto minmax(0, 1fr); align-items: center; }
+.quiz-keypad label { grid-column: 1 / 3; grid-template-columns: auto minmax(0, 1fr); align-items: center; }
 .quiz-keypad input { width: 100%; text-align: end; font-variant-numeric: tabular-nums; }
 .quiz-keypad button { padding-inline: 0; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
-.quiz-keypad button[data-step] { background: #dcebe1; }
+.quiz-keypad button[data-step], .quiz-keypad button[data-sign] { background: #dcebe1; }
+.quiz-keypad button[data-sign] { grid-column: 3; font-weight: 800; }
 .drop-action { display: grid; }
 #drop { min-height: 48px; box-shadow: 0 3px 0 #083c2e; }
 #drop:disabled { box-shadow: none; }
@@ -456,7 +457,8 @@ body > footer a { color: var(--green); }
    </div>
   </fieldset>
   <fieldset id="quizKeypad" class="quiz-action quiz-keypad">
-   <label><span data-label="amount">数</span><input id="amount" type="number" inputmode="numeric" min="1" max="1000000000" step="1" value="1" required></label>
+   <label><span data-label="amount">数</span><input id="amount" type="number" inputmode="numeric" min="-1000000000" max="1000000000" step="1" value="1" required></label>
+   <button type="button" data-sign="toggle" aria-label="正負の符号を切り替える">±</button>
    <button type="button" data-digit="7">7</button>
    <button type="button" data-digit="8">8</button>
    <button type="button" data-digit="9">9</button>
@@ -515,7 +517,8 @@ body > footer a { color: var(--green); }
     {side:'right', multiplier:2, inside:2, outerX:0, outerNumber:0, other:[3,0]},
     {side:'right', multiplier:-2, inside:-3, outerX:4, outerNumber:0, other:[4,0]},
     {side:'left', multiplier:2, inside:1, outerX:0, outerNumber:0, other:[0,7]},
-    {side:'left', multiplier:3, inside:-2, outerX:0, outerNumber:0, other:[0,2]}
+    {side:'left', multiplier:3, inside:-2, outerX:0, outerNumber:0, other:[0,2]},
+    {side:'left', multiplier:-2, inside:1, outerX:0, outerNumber:0, other:[0,7]}
   ];
   const grouped = groups.map(({side,multiplier,inside,outerX,outerNumber,other},i)=>{
     const expanded=[outerX+multiplier,outerNumber+multiplier*inside];
@@ -532,11 +535,11 @@ body > footer a { color: var(--green); }
     return {state:state.slice(0,4)};
   }
   const levels = [
-    [[1,3,0,7],[1,5,0,7],[1,2,0,8]],
-    [[4,0,0,12],[2,0,0,5],[3,2,0,14],[3,1,0,8],[2,5,0,13]],
-    [[3,2,1,10],[4,1,2,8],[4,1,2,9],[5,2,2,7],[5,0,2,12]],
-    [[4,3,0,15,10],[4,1,0,8,10],[1,2,0,8,10],[3,2,1,7,10],[3,2,1,10,10]],
-    [[1,2,0,8,4],[2,1,0,6,6],[2,3,0,11,6],[4,1,1,6,6],[3,2,1,10,6]],
+    [[1,3,0,7],[1,5,0,7],[1,2,0,8],[1,5,0,2]],
+    [[4,0,0,12],[2,0,0,5],[3,2,0,14],[3,1,0,8],[2,5,0,13],[-3,0,0,12],[-2,0,0,-5]],
+    [[3,2,1,10],[4,1,2,8],[4,1,2,9],[5,2,2,7],[5,0,2,12],[1,2,4,9]],
+    [[4,3,0,15,10],[4,1,0,8,10],[1,2,0,8,10],[3,2,1,7,10],[3,2,1,10,10],[-4,1,0,8,10]],
+    [[1,2,0,8,4],[2,1,0,6,6],[2,3,0,11,6],[4,1,1,6,6],[3,2,1,10,6],[-2,1,0,6,6]],
     grouped
   ];
   // Four signed integer numerators and an optional common denominator.
@@ -550,7 +553,8 @@ body > footer a { color: var(--green); }
   }
   function apply(state,operation,amount) {
     if(groupFor(state))return {error:'openFirst'};
-    if(!Number.isSafeInteger(amount)||amount<1||amount>Number(limit))return {error:'invalid'};
+    if(!Number.isSafeInteger(amount)||Math.abs(amount)>Number(limit))return {error:'invalid'};
+    if(amount===0)return {error:operation==='multiply'||operation==='divide'?'zeroOperation':'unchanged'};
     let [a,b,c,d,scale=1n]=state.map(BigInt);
     const n=BigInt(amount), delta=n*scale;
     switch(operation){
@@ -562,6 +566,7 @@ body > footer a { color: var(--green); }
       case 'divide': scale*=n; break;
       default: return {error:'invalid'};
     }
+    if(scale<0n){a=-a;b=-b;c=-c;d=-d;scale=-scale;}
     const common=[a,b,c,d].reduce(gcd,scale);
     const normalized=[a,b,c,d,scale].map(value=>value/common);
     if(normalized.some(value=>abs(value)>limit))return {error:'limit'};
@@ -576,7 +581,9 @@ body > footer a { color: var(--green); }
     return ['divide',a];
   }
   function cards(state,turn) {
-    const choices=[nextMove(state),['add',1],['remove',1],['multiply',3],['divide',2]];
+    const [a,b,c]=state;
+    const negative=a<0||b<0||c<0||state[3]<0;
+    const choices=[nextMove(state),['add',1],['remove',1],['multiply',negative?-1:3],['divide',negative?-2:2]];
     const unique=choices.filter(([op,n],i)=>choices.findIndex(([other,m])=>op===other&&n===m)===i);
     const offset=(turn+1)%unique.length;
     return [...unique.slice(offset),...unique.slice(0,offset)];
@@ -650,14 +657,14 @@ body > footer a { color: var(--green); }
       quizAddVariable:'文字の項を足す',quizRemoveVariable:'文字の項を引く',quizAdd:'両辺にたす',quizSubtract:'両辺からひく',quizMultiply:'両辺にかける',quizDivide:'両辺をわる',increase:'数を1増やす',decrease:'数を1減らす',operation:'両辺にする操作',amount:'数',apply:'両辺に適用',undo:'1手戻す',hint:'ヒント',next:'次の問題',
       history:'式の変形',terms:'利用条件',initial:'はじめの式',
       add:'おもりを足す',subtract:'おもりを引く',remove:'x を引く',divide:'同じ数で割る',
-      invalid:'1以上の整数を選ぼう。',addVariable:'x の箱を足す',
+      invalid:'整数を入力しよう。',zeroOperation:'0をかけたり、0で割ったりすると同じ解を保てないよ。0以外の数を選ぼう。',toggleSign:'正負の符号を切り替える',addVariable:'x の箱を足す',
       chooseSigns:'展開した2つの項の符号を選ぼう',checkSigns:'符号を確かめる',open:'かっこを開く',openDrop:side=>`「ひらく」を${side==='right'?'右':'左'}皿に落とす ↓`,
       openFirst:'先に、かっこの外の数を中の両方の項にかけよう。',openDone:'かっこが外れた！ 知っている形になったね。',
       signX:product=>`x の項に注目。${product} の符号はどちら？`,
       signNumber:product=>`数の項に注目。${product} の符号はどちら？`,
       signLabel:['x の項の符号','数の項の符号'],opened:'分配法則でかっこを外し、同類項をまとめた。',
       scalePrompt:'両辺のすべての項に同じ数をかけて、整数の式にしよう。',scaleDone:'整数の式になった！ 前のステージで使った解き方が使えるよ。',
-      limit:'この盤面で表示できる桁数を超えるよ。別の操作を選ぼう。',unchanged:'1でかけたり割ったりしても、皿の中身は変わらないよ。',
+      limit:'この盤面で表示できる桁数を超えるよ。別の操作を選ぼう。',unchanged:'この操作では式が変わらないよ。別の操作を選ぼう。',
       explain:{addVariable:n=>`両辺に ${n===1?'x':n+'x'} を足した。`,multiply:n=>`両辺に ${n} をかけた。`,add:n=>`両辺に ${n} を足した。`,subtract:n=>`両辺から ${n} を引いた。`,remove:n=>`両辺から ${n===1?'x':n+'x'} を引いた。`,divide:n=>`両辺を ${n} で割った。`},
       hints:{addVariable:n=>`右辺で正負の x が打ち消し合うように、両辺に ${n===1?'x':n+'x'} を足そう。`,add:n=>`両辺に ${n} を足すと、左辺の負のおもりが打ち消せるよ。`,multiply:n=>`両辺のすべての項に ${n} をかけると整数の式になるよ。`,subtract:n=>`左の皿のおもりを減らすため、両辺から ${n} を引いてみよう。`,remove:n=>`右の x がなくなるように、両辺から ${n===1?'x':n+'x'} を引いてみよう。`,divide:n=>`左の x を1つにするため、両辺を ${n} で割ってみよう。`},
       success:(n,l,r)=>`救出成功！ x = ${n}。最初の式で確かめると、左辺は ${l}、右辺は ${r}。`,
@@ -694,14 +701,14 @@ body > footer a { color: var(--green); }
       quizAddVariable:'Add a variable term',quizRemoveVariable:'Subtract a variable term',quizAdd:'Add to both sides',quizSubtract:'Subtract from both sides',quizMultiply:'Multiply both sides',quizDivide:'Divide both sides',increase:'Increase amount by 1',decrease:'Decrease amount by 1',operation:'Operation on both sides',amount:'Amount',apply:'Apply to both sides',undo:'Undo',hint:'Hint',next:'Next problem',
       history:'Equation steps',terms:'Terms of Use',initial:'Starting equation',
       add:'Add weights',subtract:'Subtract weights',remove:'Subtract x boxes',divide:'Divide by the same number',
-      invalid:'Choose a whole number of at least 1.',addVariable:'Add x boxes',
+      invalid:'Enter an integer.',zeroOperation:'Multiplying by zero loses the original solution, and division by zero is undefined. Choose a nonzero number.',toggleSign:'Change the sign',addVariable:'Add x boxes',
       chooseSigns:'Choose the sign of each expanded term',checkSigns:'Check signs',open:'Open the brackets',openDrop:side=>`Drop Open on the ${side} pan ↓`,
       openFirst:'First multiply each term inside the brackets by the number outside.',openDone:'Brackets cleared! This is a form you already know.',
       signX:product=>`Check the x term. What is the sign of ${product}?`,
       signNumber:product=>`Check the constant term. What is the sign of ${product}?`,
       signLabel:['Sign of the x term','Sign of the constant term'],opened:'Expanded the brackets and combined like terms.',
       scalePrompt:'Multiply every term on both sides by the same number to get a whole-number equation.',scaleDone:'A whole-number equation! Now use the moves you learned in earlier stages.',
-      limit:'That exceeds the number of digits this board can display. Try another operation.',unchanged:'Multiplying or dividing by 1 leaves each pan unchanged.',
+      limit:'That exceeds the number of digits this board can display. Try another operation.',unchanged:'This operation leaves the equation unchanged. Choose another operation.',
       explain:{addVariable:n=>`Added ${n===1?'x':n+'x'} to both sides.`,multiply:n=>`Multiplied both sides by ${n}.`,add:n=>`Added ${n} to both sides.`,subtract:n=>`Subtracted ${n} from both sides.`,remove:n=>`Subtracted ${n===1?'x':n+'x'} from both sides.`,divide:n=>`Divided both sides by ${n}.`},
       hints:{addVariable:n=>`Add ${n===1?'x':n+'x'} to both sides to cancel the negative x term on the right.`,add:n=>`Add ${n} to both sides to cancel the negative constant on the left.`,multiply:n=>`Multiply every term on both sides by ${n} to get whole numbers.`,subtract:n=>`Try subtracting ${n} from both sides to remove weights from the left pan.`,remove:n=>`Try subtracting ${n===1?'x':n+'x'} from both sides to clear the x boxes on the right.`,divide:n=>`Try dividing both sides by ${n} to leave one x.`},
       success:(n,l,r)=>`Rescued! x = ${n}. In the starting equation, the left side is ${l} and the right side is ${r}.`,
@@ -734,7 +741,7 @@ body > footer a { color: var(--green); }
   }
   const activeLevel=()=>challengeRun?.active?challengeLevels:stage===-1?practiceLevel:levels[stage];
   const key = () => stage+':'+problem;
-  const cardLabel = (op,n) => ({add:'+',subtract:'−',addVariable:'+',remove:'−',multiply:'×',divide:'÷'})[op]+(['remove','addVariable'].includes(op)?(n===1?'x':n+'x'):n);
+  const cardLabel = (op,n) => ({add:'+',subtract:'−',addVariable:'+',remove:'−',multiply:'×',divide:'÷'})[op]+(['remove','addVariable'].includes(op)?(n===1?'x':n+'x'):n<0?'(−'+Math.abs(n)+')':n);
   const copy = () => words[language];
   const current = () => history.at(-1).state;
   const solved = state => form(state)===3;
@@ -780,7 +787,8 @@ body > footer a { color: var(--green); }
   function sameOperation(state,operation,amount,compact=false){
     const [a,b,c,d,scale=1]=state;
     const symbol={add:'+',subtract:'−',addVariable:'+',remove:'−',multiply:'×',divide:'÷'}[operation];
-    const operand=operation==='addVariable'||operation==='remove'?xTerm(amount,1):amount;
+    const rawOperand=operation==='addVariable'||operation==='remove'?xTerm(amount,1):String(amount).replace('-','−');
+    const operand=amount<0?'('+rawOperand+')':rawOperand;
     const side=(x,n)=>{
       const expression=term(x,n,scale);
       const needsGroup=!compact||symbol==='×'||symbol==='÷';
@@ -1102,6 +1110,7 @@ body > footer a { color: var(--green); }
     document.querySelector('.board').setAttribute('aria-label',copy().balance);
     $('language').textContent=language==='ja'?'EN':'日本語';
     $('language').lang=language==='ja'?'en':'ja';
+    $('quizKeypad').querySelector('[data-sign]').setAttribute('aria-label',copy().toggleSign);
     $('quizKeypad').querySelector('[data-step="1"]').setAttribute('aria-label',copy().increase);
     $('quizKeypad').querySelector('[data-step="-1"]').setAttribute('aria-label',copy().decrease);
     document.body.dataset.mode=mode;
@@ -1159,13 +1168,19 @@ body > footer a { color: var(--green); }
     const amount=$('amount');
     const currentAmount=amount.valueAsNumber||0;
     const max=Number(amount.max);
-    if(button.dataset.step){
-      amount.value=Math.max(1,Math.min(max,currentAmount+Number(button.dataset.step)));
+    if(button.dataset.sign){
+      amount.value=currentAmount===0?-1:-currentAmount;
       replaceAmount=true;
       return;
     }
-    const value=(replaceAmount?0:currentAmount)*10+Number(button.dataset.digit);
-    if(value<=max)amount.value=value;
+    if(button.dataset.step){
+      amount.value=Math.max(-max,Math.min(max,currentAmount+Number(button.dataset.step)));
+      replaceAmount=true;
+      return;
+    }
+    const sign=currentAmount<0?-1:1;
+    const value=sign*((replaceAmount?0:Math.abs(currentAmount))*10+Number(button.dataset.digit));
+    if(Math.abs(value)<=max)amount.value=value;
     replaceAmount=false;
   });
   $('controls').addEventListener('submit',event=>{
