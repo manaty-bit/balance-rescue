@@ -484,7 +484,7 @@ body > footer a { color: var(--green); }
 </dialog>
 <dialog id="challengeDialog" class="award-dialog" aria-labelledby="challengeTitle">
  <h2 id="challengeTitle" data-label="challenge">60秒チャレンジ</h2>
- <p data-label="challengeRules">整数の方程式を60秒で何問解けるかな？ ヒントも使えます。自己ベストは解けた問題数です。</p>
+ <p data-label="challengeRules">整数係数の方程式（分数解もあり）を60秒で何問解けるかな？ ヒントも使えます。自己ベストは解けた問題数です。</p>
  <footer><button id="startChallenge" type="button" class="primary" data-label="startChallenge">スタート</button><button id="closeChallenge" type="button" data-label="close">閉じる</button></footer>
 </dialog>
 <script>
@@ -495,7 +495,9 @@ body > footer a { color: var(--green); }
     {side:'left', multiplier:2, inside:-3, outerX:0, outerNumber:7, other:[0,15]},
     {side:'left', multiplier:-2, inside:-1, outerX:5, outerNumber:0, other:[0,14]},
     {side:'right', multiplier:2, inside:2, outerX:0, outerNumber:0, other:[3,0]},
-    {side:'right', multiplier:-2, inside:-3, outerX:4, outerNumber:0, other:[4,0]}
+    {side:'right', multiplier:-2, inside:-3, outerX:4, outerNumber:0, other:[4,0]},
+    {side:'left', multiplier:2, inside:1, outerX:0, outerNumber:0, other:[0,7]},
+    {side:'left', multiplier:3, inside:-2, outerX:0, outerNumber:0, other:[0,2]}
   ];
   const grouped = groups.map(({side,multiplier,inside,outerX,outerNumber,other},i)=>{
     const expanded=[outerX+multiplier,outerNumber+multiplier*inside];
@@ -513,10 +515,10 @@ body > footer a { color: var(--green); }
   }
   const levels = [
     [[1,3,0,7],[1,5,0,7],[1,2,0,8]],
-    [[4,0,0,12],[3,2,0,14],[2,5,0,13]],
-    [[3,2,1,10],[4,1,2,9],[5,0,2,12]],
-    [[4,3,0,15,10],[1,2,0,8,10],[3,2,1,10,10]],
-    [[1,2,0,8,4],[2,3,0,11,6],[3,2,1,10,6]],
+    [[4,0,0,12],[2,0,0,5],[3,2,0,14],[3,1,0,8],[2,5,0,13]],
+    [[3,2,1,10],[4,1,2,8],[4,1,2,9],[5,2,2,7],[5,0,2,12]],
+    [[4,3,0,15,10],[4,1,0,8,10],[1,2,0,8,10],[3,2,1,7,10],[3,2,1,10,10]],
+    [[1,2,0,8,4],[2,1,0,6,6],[2,3,0,11,6],[4,1,1,6,6],[3,2,1,10,6]],
     grouped
   ];
   // Four signed integer numerators and an optional common denominator.
@@ -586,7 +588,7 @@ body > footer a { color: var(--green); }
     return {correct,total,accuracy:Math.round(correct*100/total),grade:correct===total?'gold':'silver'};
   }
   function retainStage(previous,award){
-    if(!previous||award.correct>previous.correct)return award;
+    if(!previous||award.total!==previous.total||award.correct>previous.correct)return award;
     return previous;
   }
   window.BalanceRescue = { levels, apply, cards, nextMove, form, groupFor, expand, stageResult, retainStage, isDetour, puzzleScore };
@@ -601,7 +603,7 @@ body > footer a { color: var(--green); }
     ja:{
       practice:'0 · あそび方',practiceGuide:'両皿から同じ数を取っても、てんびんは釣り合うよ。まずは両辺から1を引いてみよう。',
       practiceDone:'ステージ1へ →',challenge:'60秒チャレンジ',startChallenge:'スタート',stopChallenge:'チャレンジを終える',
-      challengeRules:'整数の方程式を60秒で何問解けるかな？ ヒントも使えます。延長・減点はなく、解けた問題数が自己ベストになります。',
+      challengeRules:'整数係数の方程式（分数解もあり）を60秒で何問解けるかな？ ヒントも使えます。延長・減点はなく、解けた問題数が自己ベストになります。',
       clock:(time,score)=>`残り ${time}秒 ｜ ${score}問クリア`,
       records:'学習記録',close:'閉じる',nickname:'賞状に載せる名前（任意）',saveAward:'賞状PNGを保存',
       graduation:'卒業証明書',clearRecords:'記録を消去',confirmClear:'この端末のてんびんレスキューの記録を消去しますか？',
@@ -646,7 +648,7 @@ body > footer a { color: var(--green); }
     en:{
       practice:'0 · How to play',practiceGuide:'The pans stay balanced when you remove the same amount from both. Try subtracting 1 from each side.',
       practiceDone:'Go to Stage 1 →',challenge:'60-second challenge',startChallenge:'Start',stopChallenge:'End challenge',
-      challengeRules:'How many whole-number equations can you solve in 60 seconds? Hints are allowed. The clock is fixed and the score counts equations solved.',
+      challengeRules:'How many equations with integer coefficients (including fractional solutions) can you solve in 60 seconds? Hints are allowed. The clock is fixed and the score counts equations solved.',
       clock:(time,score)=>`${time}s left · ${score} cleared`,
       records:'Learning record',close:'Close',nickname:'Name for the certificate (optional)',saveAward:'Save certificate PNG',
       graduation:'Graduation certificate',clearRecords:'Clear records',confirmClear:'Clear the Balance Rescue records on this device?',
@@ -718,9 +720,9 @@ body > footer a { color: var(--green); }
   const copy = () => words[language];
   const current = () => history.at(-1).state;
   const solved = state => form(state)===3;
-  function number(n,scale) {
+  function number(n,scale,forceFraction=false) {
     if(n%scale===0)return String(n/scale).replace('-','−');
-    if(stage===3&&100%scale===0)return String(n*(100/scale)/100).replace('-','−');
+    if(!forceFraction&&!challengeRun?.active&&stage===3&&100%scale===0)return String(n*(100/scale)/100).replace('-','−');
     let a=Math.abs(n),b=scale;
     while(b)[a,b]=[b,a%b];
     return String(n/a).replace('-','−')+'/'+(scale/a);
@@ -755,7 +757,7 @@ body > footer a { color: var(--green); }
       return groupEquation(group,before+box+after);
     }
     const [a,b,c,d,scale=1]=state;
-    return term(a,b,scale)+' = '+term(c,d,scale);
+    return term(a,b,scale)+' = '+(form(state)===3?number(d,scale,true):term(c,d,scale));
   }
   function sameOperation(state,operation,amount,compact=false){
     const [a,b,c,d,scale=1]=state;
@@ -789,10 +791,10 @@ body > footer a { color: var(--green); }
     chip.append(box.slice(0,openParenthesis),payload);
     $(group.side).replaceChildren(before,chip,after);
   }
-  function pan(id,boxes,weights,scale) {
+  function pan(id,boxes,weights,scale,forceFraction=false) {
     if(scale>1||boxes<0||weights<0||boxes>8){
       const tokens=[];
-      for(const [label,style] of [[boxes?xTerm(boxes,scale):'','token variable'],[weights||!boxes?number(weights,scale):'','token']]){
+      for(const [label,style] of [[boxes?xTerm(boxes,scale):'','token variable'],[weights||!boxes?number(weights,scale,forceFraction):'','token']]){
         if(!label)continue;
         const token=document.createElement('span');
         token.className=style;
@@ -1006,7 +1008,7 @@ body > footer a { color: var(--green); }
     syncQuestionClock();
     const group=groupFor(state);
     if(group?.side!=='left')pan('left',a,b,scale);
-    if(group?.side!=='right')pan('right',c,d,scale);
+    if(group?.side!=='right')pan('right',c,d,scale,solved(state));
     if(group)groupPan(group);
     renderSigns(group);
     const done=solved(state);
@@ -1043,7 +1045,8 @@ body > footer a { color: var(--green); }
     const [pa,pb,pc,pd,originalScale=1]=history[0].state;
     const latest=history.at(-1);
     const signError=group&&(feedback==='signX'||feedback==='signNumber');
-    $('feedback').textContent=signError?w[feedback](signProduct(group,feedback)):done?w.success(number(d,scale),number(pa*d+pb*scale,originalScale*scale),number(pc*d+pd*scale,originalScale*scale)):feedback==='hint'?hint(state):feedback==='step'?(history.at(-1).operation==='open'?w.opened:detoured?w.complex:w.explain[history.at(-1).operation](history.at(-1).amount)):w[feedback];
+    const feedbackText=signError?w[feedback](signProduct(group,feedback)):done?w.success(number(d,scale,true),number(pa*d+pb*scale,originalScale*scale),number(pc*d+pd*scale,originalScale*scale)):feedback==='hint'?hint(state):feedback==='step'?(history.at(-1).operation==='open'?w.opened:detoured?w.complex:w.explain[history.at(-1).operation](history.at(-1).amount)):w[feedback];
+    $('feedback').replaceChildren(equationContent(feedbackText));
     const applied=latest.operation&&latest.operation!=='open'
       ?sameOperation(history.at(-2).state,latest.operation,latest.amount):'';
     $('appliedEquation').hidden=!applied;
