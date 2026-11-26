@@ -375,6 +375,43 @@ body > footer a { color: var(--green); }
   .top-navigation #stageName { font-size: .96rem; color: var(--ink); font-weight: 750; min-height: 1.45em; }
 }
 
+
+/* Comfortable desktop proportions when vertical space is available. */
+@media (min-width: 980px) and (min-height: 760px) {
+  .play-layout { align-items: stretch; gap: 16px; }
+  .workbench, .guidance { gap: 14px; }
+  .guidance { grid-template-rows: auto minmax(0, 1fr); }
+  .panel { padding: 15px 16px; }
+  .panel h2 { font-size: 1.08rem; }
+  .board { padding: 17px 18px 14px; }
+  .board-top { font-size: .91rem; margin-bottom: 10px; }
+  .equation { font-size: clamp(2rem, 3.2vw, 3rem); padding: 7px 18px; }
+  .pan-label { font-size: .86rem; margin-bottom: 5px; }
+  [data-mode=drop] .pan { min-height: clamp(88px, 11vh, 115px); }
+  [data-mode=drop] .group-token { font: 400 1.5rem/1.25 var(--math-display); padding: 6px 9px; }
+  [data-mode=drop] .group-payload { padding: 4px 7px; }
+  .drop-controls strong { font-size: 1rem; }
+  .card { min-height: 54px; min-width: 56px; font-size: 1.42rem; }
+  .shape { font-size: 1.12rem; }
+  .shape-status, #dropPreview, #moveCount { font-size: .96rem; }
+  .history-panel { display: flex; flex-direction: column; min-height: 120px; }
+  .history-panel .steps { font-size: 1rem; line-height: 1.6; max-height: clamp(7rem, 25vh, 19rem); }
+  .history-panel .steps li { padding-block: 6px; }
+  .history-equation { font-size: 1.1em; }
+  #appliedEquation { font-size: 1.12rem; }
+  .sign-board { padding: 13px; }
+  .sign-math { font-size: 1.3rem; }
+  body > footer { padding-block: 9px; }
+}
+@media (min-width: 980px) and (min-height: 760px) and (prefers-reduced-motion: no-preference) {
+  .board[data-practice-drop=true] .pans { margin-top: clamp(90px, 15vh, 155px); }
+  .board[data-cleared=true] .pans { margin-top: clamp(45px, 9vh, 95px); }
+}
+@media (min-width: 980px) and (min-height: 900px) {
+  .board { padding-block: 20px 18px; }
+  .history-panel .steps { max-height: clamp(10rem, 29vh, 22rem); }
+}
+
 </style>
 </head>
 <body data-mode="drop">
