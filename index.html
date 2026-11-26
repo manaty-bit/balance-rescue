@@ -358,11 +358,28 @@ body > footer a { color: var(--green); }
   .play-layout, .workbench, .guidance { gap: 12px; }
 }
 
+
+/* Stage selection: use the free space at the top right on desktop. */
+.stage-buttons button { position: relative; }
+.stage-buttons button:hover:not(:disabled) { border-color: var(--green); background: #e1eee4; }
+.stage-buttons [aria-current="step"]:hover:not(:disabled) { background: var(--green); color: #fff; }
+@media (min-width: 980px) {
+  .top-navigation { display: grid; grid-template-columns: minmax(0, 1fr) minmax(350px, .85fr); grid-template-areas: "intro stages" "toolbar stages"; column-gap: 20px; row-gap: 4px; align-items: center; margin-bottom: 10px; }
+  .top-navigation .intro { grid-area: intro; margin: 0; }
+  .top-navigation .toolbar { grid-area: toolbar; margin: 0; }
+  .top-navigation .stage-nav { grid-area: stages; display: grid; grid-template-columns: 1fr; gap: 6px; justify-self: end; align-self: center; width: min(100%, 440px); padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); margin: 0; }
+  .top-navigation #stageLabel { font-size: .82rem; font-weight: 800; color: var(--green); }
+  .top-navigation .stage-buttons { width: 100%; gap: 5px; }
+  .top-navigation .stage-buttons button { min-height: 40px; padding: 4px 0; font-size: 1rem; }
+  .top-navigation #stageName { font-size: .96rem; color: var(--ink); font-weight: 750; min-height: 1.45em; }
+}
+
 </style>
 </head>
 <body data-mode="drop">
 <header><span class="brand"><span class="brand-mark" aria-hidden="true">±</span>MANATY LAB</span><button id="language" type="button" lang="en">EN</button></header>
 <main>
+<div class="top-navigation">
 <div class="intro">
  <div><h1 data-label="title">てんびんレスキュー</h1><p data-label="intro">カードを両皿に落として、左に x、右に数だけ残そう。</p></div>
 </div>
@@ -390,6 +407,7 @@ body > footer a { color: var(--green); }
  </div>
  <span id="stageName"></span>
 </nav>
+</div>
 <p id="practiceGuide" hidden data-label="practiceGuide">両皿から同じ数を取っても、てんびんは釣り合うよ。まずは両辺から1を引いてみよう。</p>
 <div class="play-layout">
 <div class="workbench">
@@ -1093,7 +1111,9 @@ body > footer a { color: var(--green); }
     document.querySelector('[data-label="intro"]').textContent=copy()[mode==='drop'?'dropIntro':'intro'];
     for(const button of $('stage').querySelectorAll('button')){
       const index=Number(button.dataset.stage);
-      button.setAttribute('aria-label',index===-1?copy().practice:copy().stages[index]);
+      const stageTitle=index===-1?copy().practice:copy().stages[index];
+      button.setAttribute('aria-label',stageTitle);
+      button.title=stageTitle;
     }
     render();
   }
