@@ -340,6 +340,24 @@ body > footer a { color: var(--green); }
   .board[data-cleared=true] .pans { margin-top: 20px; }
   .history-panel .steps { max-height: clamp(5rem, 18vh, 10rem); }
 }
+
+/* Compact top layout for desktop */
+@media (min-width: 980px) {
+  body > header, main, body > footer { width: min(100% - 40px, 1540px); }
+  body > header { padding: 8px 0 4px; }
+  .brand { font-size: .78rem; }
+  .brand-mark { width: 28px; height: 28px; font-size: 1rem; }
+  .intro { align-items: end; gap: 4px 16px; margin: 2px 0 8px; }
+  .intro p { margin-top: 2px; font-size: .92rem; max-width: 52rem; }
+  h1 { font-size: clamp(1.7rem, 2.8vw, 2.65rem); line-height: 1.08; }
+  .toolbar { gap: 6px 14px; margin-bottom: 8px; }
+  .mode-tabs { padding: 2px; border-radius: 12px; }
+  .mode-tabs button, .session-tools button { min-height: 40px; padding-block: 6px; }
+  .stage-label, .stage-nav { gap: 6px 10px; margin-bottom: 4px; }
+  .stage-buttons { gap: 3px; }
+  .play-layout, .workbench, .guidance { gap: 12px; }
+}
+
 </style>
 </head>
 <body data-mode="drop">
